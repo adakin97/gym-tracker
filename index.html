@@ -189,6 +189,22 @@ body {
   width: 100%; height: 180px;
   object-fit: cover; display: block;
   background: var(--card2);
+  cursor: zoom-in;
+}
+
+/* ── Lightbox ── */
+#lightbox {
+  display: none;
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.92);
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+#lightbox.open { display: flex; }
+#lightbox img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
 }
 .exercise-img-placeholder {
   width: 100%; height: 180px;
@@ -405,6 +421,7 @@ body {
 </div>
 
 <div class="sync-toast" id="syncToast">Synced to cloud ☁️</div>
+<div id="lightbox" onclick="this.classList.remove('open')"><img id="lightbox-img" src="" alt=""></div>
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -598,6 +615,11 @@ async function logSet(exercise, setIdx, weight, reps) {
   showSyncToast();
 }
 
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+
 function showSyncToast() {
   const t = document.getElementById('syncToast');
   t.classList.add('show');
@@ -685,7 +707,8 @@ function renderToday() {
     html += `
       <div class="exercise-card">
         <img class="exercise-img" src="${IMG_BASE}${ex.imgId}" alt="${ex.name}"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"
+          onclick="openLightbox(this.src)"
         <div class="exercise-img-placeholder" style="display:none">${icon}</div>
         <div class="exercise-body">
           <div class="exercise-header">
