@@ -223,9 +223,33 @@ body {
 }
 .prev-best .val { color: var(--green); font-weight: 700; }
 
+/* ── Day selector ── */
+.day-selector {
+  display: flex; gap: 8px;
+  padding: 10px 20px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.day-selector::-webkit-scrollbar { display: none; }
+.day-pill {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: none; color: var(--sub);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; line-height: 1.3;
+  transition: all 0.15s;
+}
+.day-pill small { font-size: 9px; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
+.day-pill.is-today { border-color: var(--text); color: var(--text); }
+.day-pill.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
 /* ── Set logger ── */
 .sets-header {
-  display: grid; grid-template-columns: 36px 1fr 1fr 36px;
+  display: grid; grid-template-columns: 36px 1fr 1fr 36px 28px;
   gap: 6px; margin-bottom: 6px; padding: 0 2px;
 }
 .sets-header span {
@@ -234,9 +258,18 @@ body {
 }
 .sets-header span:first-child { text-align: left; }
 .set-row {
-  display: grid; grid-template-columns: 36px 1fr 1fr 36px;
+  display: grid; grid-template-columns: 36px 1fr 1fr 36px 28px;
   gap: 6px; margin-bottom: 6px; align-items: center;
 }
+.set-del-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%; border: none;
+  background: none; color: var(--border);
+  font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0; transition: color 0.15s;
+}
+.set-del-btn:active { color: var(--accent); }
 .set-num { font-size: 13px; color: var(--sub); font-weight: 600; padding-top: 2px; }
 .set-input {
   background: var(--card2); border: 1.5px solid var(--border);
@@ -343,6 +376,7 @@ body {
         <button class="signout-btn" onclick="signOut()">Sign out</button>
       </div>
     </div>
+    <div class="day-selector" id="daySelector"></div>
   </div>
 
   <div class="view active" id="view-today">
@@ -449,14 +483,39 @@ const MUSCLE_ICONS = {
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
-const today   = new Date();
-const dow     = today.getDay();
+const today    = new Date();
 const todayStr = today.toISOString().split('T')[0];
-const workout = WORKOUTS[dow] || null;
+const todayDow = today.getDay();
 
+let selectedDow = todayDow;
+let workout     = WORKOUTS[selectedDow] || null;
 let currentUser = null;
-let allLogs     = []; // in-memory cache
+let allLogs     = [];
 const extraSets = {};
+
+const WORKOUT_DAYS = [
+  { dow: 1, short: 'Mon', label: 'Upper A' },
+  { dow: 2, short: 'Tue', label: 'Lower A' },
+  { dow: 4, short: 'Thu', label: 'Upper B' },
+  { dow: 6, short: 'Sat', label: 'Lower B' },
+];
+
+function renderDaySelector() {
+  const el = document.getElementById('daySelector');
+  if (!el) return;
+  el.innerHTML = WORKOUT_DAYS.map(d => `
+    <button class="day-pill ${d.dow === selectedDow ? 'selected' : ''} ${d.dow === todayDow ? 'is-today' : ''}"
+      onclick="selectWorkout(${d.dow})">
+      ${d.label}<small>${d.short}${d.dow === todayDow ? ' · Today' : ''}</small>
+    </button>`).join('');
+}
+
+function selectWorkout(dow) {
+  selectedDow = dow;
+  workout = WORKOUTS[dow] || null;
+  renderDaySelector();
+  renderToday();
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(async user => {
@@ -466,6 +525,7 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('signin-screen').style.display  = 'none';
     document.getElementById('app').style.display = 'block';
+    renderDaySelector();
     renderToday();
   } else {
     document.getElementById('loading-screen').style.display = 'none';
@@ -617,6 +677,7 @@ function renderToday() {
             onclick="logSetUI(${exIdx}, ${s}, '${ex.name}')">
             ${isDone ? '✓' : '○'}
           </button>
+          <button class="set-del-btn" onclick="removeSetUI('${ex.name}', ${s}, 'setrow-${exIdx}-${s}', ${exIdx})">×</button>
         </div>`;
     }
 
@@ -640,7 +701,7 @@ function renderToday() {
             ? `<div class="prev-best"><span>Previous best:</span><span class="val">${prev.weight} kg</span><span>on ${new Date(prev.date + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span></div>`
             : `<div class="prev-best" style="color:var(--sub)">No previous logs — first time! 🔥</div>`}
           <div class="sets-header">
-            <span>Set</span><span>Weight</span><span>Reps</span><span></span>
+            <span>Set</span><span>Weight</span><span>Reps</span><span></span><span></span>
           </div>
           ${setRowsHtml}
           <button class="add-set-btn" onclick="addSet(${exIdx}, '${ex.name}')">+ Add Set</button>
@@ -693,15 +754,35 @@ function addSet(exIdx, exerciseName) {
   const newSetIdx = ex.sets + extraSets[exIdx] - 1;
   const addBtn    = document.querySelector(`#view-today .exercise-card:nth-child(${exIdx + 2}) .add-set-btn`);
 
+  const rowId = `setrow-${exIdx}-${newSetIdx}`;
   const row = document.createElement('div');
   row.className = 'set-row';
+  row.id = rowId;
   row.innerHTML = `
     <div class="set-num">S${newSetIdx + 1}</div>
     <input class="set-input" type="number" inputmode="decimal" placeholder="kg" id="w-${exIdx}-${newSetIdx}">
     <input class="set-input" type="number" inputmode="numeric" placeholder="reps" id="r-${exIdx}-${newSetIdx}">
     <button class="set-done-btn" id="btn-${exIdx}-${newSetIdx}"
-      onclick="logSetUI(${exIdx}, ${newSetIdx}, '${exerciseName}')">○</button>`;
+      onclick="logSetUI(${exIdx}, ${newSetIdx}, '${exerciseName}')">○</button>
+    <button class="set-del-btn" onclick="removeSetUI('${exerciseName}', ${newSetIdx}, '${rowId}', ${exIdx})">×</button>`;
   if (addBtn) addBtn.parentNode.insertBefore(row, addBtn);
+}
+
+// ── Remove set ────────────────────────────────────────────────────────────────
+async function removeSetUI(exerciseName, setIdx, rowId, exIdx) {
+  // Delete from Firestore if it was logged
+  const existing = allLogs.find(l =>
+    l.date === todayStr && l.exercise === exerciseName && l.setIdx === setIdx
+  );
+  if (existing) {
+    await userLogs().doc(existing._id).delete();
+    allLogs = allLogs.filter(l => l._id !== existing._id);
+  }
+  // Remove row from DOM
+  const row = document.getElementById(rowId);
+  if (row) row.remove();
+  // Update progress bar
+  updateProgress(exIdx, exerciseName);
 }
 
 // ── Render history ────────────────────────────────────────────────────────────
