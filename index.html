@@ -911,6 +911,7 @@ function checkWorkoutComplete() {
   }).reduce((sum, l) => sum + (l.weight * l.reps), 0);
 
   cancelRestTimer();
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
   document.getElementById('completeBannerText').textContent =
     `🎉 Session done · ${Math.round(volume).toLocaleString()} kg total volume`;
   document.getElementById('completeBanner').classList.add('show');
@@ -1027,6 +1028,7 @@ async function logWeightUI() {
     allWeights = allWeights.filter(w => w._id !== existing._id);
   }
 
+  if (navigator.vibrate) navigator.vibrate(60);
   const entry = { date: todayStr, weight: val, ts: Date.now() };
   const ref   = await userWeights().add(entry);
   allWeights.push({ _id: ref.id, ...entry });
@@ -1236,6 +1238,7 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
     btn.classList.remove('logged');
     btn.textContent = '○';
     btn.disabled = false;
+    if (navigator.vibrate) navigator.vibrate(40);
     updateProgress(exIdx, exerciseName);
     cancelRestTimer();
     document.getElementById('completeBanner')?.classList.remove('show');
@@ -1251,6 +1254,7 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
 
   btn.classList.add('logged');
   btn.textContent = '✓';
+  if (navigator.vibrate) navigator.vibrate(60);
   updateProgress(exIdx, exerciseName);
   checkWorkoutComplete();
 
