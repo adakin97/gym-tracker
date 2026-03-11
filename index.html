@@ -402,6 +402,66 @@ body {
   z-index: 200;
 }
 .sync-toast.show { opacity: 1; }
+
+/* ── Workout type selector ── */
+.workout-selector { padding-top: 0; padding-bottom: 10px; }
+.workout-pill {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: none; color: var(--sub);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; line-height: 1.3;
+  transition: all 0.15s;
+}
+.workout-pill.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.workout-pill small { font-size: 9px; font-weight: 400; display: block; letter-spacing: 0.3px; }
+
+/* ── Swap button ── */
+.swap-btn {
+  background: var(--card2); border: none; color: var(--sub);
+  font-size: 13px; padding: 3px 8px; border-radius: 8px;
+  cursor: pointer; flex-shrink: 0; transition: color 0.15s;
+}
+.swap-btn:active { color: var(--accent); }
+
+/* ── Swap bottom sheet ── */
+.swap-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,0.75);
+  display: none; align-items: flex-end;
+}
+.swap-overlay.open { display: flex; }
+.swap-sheet {
+  background: var(--card); border-radius: 20px 20px 0 0;
+  width: 100%; max-height: 78vh;
+  display: flex; flex-direction: column;
+}
+.swap-header {
+  padding: 16px 20px 12px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.swap-title { font-size: 17px; font-weight: 700; }
+.swap-close { background: none; border: none; color: var(--sub); font-size: 22px; cursor: pointer; padding: 0; line-height: 1; }
+.swap-search {
+  margin: 12px 16px 4px; padding: 10px 14px;
+  background: var(--card2); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 15px;
+  outline: none; flex-shrink: 0;
+}
+.swap-search:focus { border-color: var(--accent); }
+.swap-list { overflow-y: auto; padding: 8px 16px 28px; }
+.swap-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.swap-item:last-child { border-bottom: none; }
+.swap-item:active { opacity: 0.7; }
+.swap-item-img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; background: var(--card2); flex-shrink: 0; }
+.swap-item-name { font-size: 14px; font-weight: 600; }
+.swap-item-badge { font-size: 11px; color: var(--sub); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -436,7 +496,8 @@ body {
         <button class="signout-btn" onclick="signOut()">Sign out</button>
       </div>
     </div>
-    <div class="day-selector" id="daySelector"></div>
+    <div class="day-selector" id="dateSelector"></div>
+    <div class="day-selector workout-selector" id="workoutSelector"></div>
   </div>
 
   <div class="view active" id="view-today">
@@ -473,6 +534,17 @@ body {
       Weight
     </button>
   </nav>
+</div>
+
+<div class="swap-overlay" id="swapOverlay" onclick="closeSwap(event)">
+  <div class="swap-sheet">
+    <div class="swap-header">
+      <span class="swap-title">Swap Exercise</span>
+      <button class="swap-close" onclick="closeSwap(null)">✕</button>
+    </div>
+    <input class="swap-search" id="swapSearch" placeholder="Search exercises…" oninput="filterSwap(this.value)">
+    <div class="swap-list" id="swapList"></div>
+  </div>
 </div>
 
 <div class="sync-toast" id="syncToast">Synced to cloud ☁️</div>
@@ -566,28 +638,71 @@ let currentUser = null;
 let allLogs     = [];
 let allWeights  = [];
 const extraSets = {};
+let selectedDate       = todayStr;   // which date to log for (may differ from today)
+const swappedExercises = {};         // exIdx → { name, imgId, muscle }
 
-const WORKOUT_DAYS = [
-  { dow: 1, short: 'Mon', label: 'Upper A' },
-  { dow: 2, short: 'Tue', label: 'Lower A' },
-  { dow: 4, short: 'Thu', label: 'Upper B' },
-  { dow: 6, short: 'Sat', label: 'Lower B' },
-];
+// All exercises across all workouts — pool for the swap feature
+const ALL_EXERCISES = (() => {
+  const seen = new Set(), out = [];
+  Object.values(WORKOUTS).forEach(w => w.exercises.forEach(ex => {
+    if (!seen.has(ex.name)) { seen.add(ex.name); out.push({ ...ex }); }
+  }));
+  return out;
+})();
 
-function renderDaySelector() {
-  const el = document.getElementById('daySelector');
+function renderDateSelector() {
+  const el = document.getElementById('dateSelector');
   if (!el) return;
-  el.innerHTML = WORKOUT_DAYS.map(d => `
-    <button class="day-pill ${d.dow === selectedDow ? 'selected' : ''} ${d.dow === todayDow ? 'is-today' : ''}"
-      onclick="selectWorkout(${d.dow})">
-      ${d.label}<small>${d.short}${d.dow === todayDow ? ' · Today' : ''}</small>
+  // Show Mon–Sun of the current week
+  const daysFromMon = (todayDow + 6) % 7;
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - daysFromMon);
+  const pills = [];
+  for (let i = 0; i < 7; i++) {
+    const d   = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    const ds      = d.toISOString().split('T')[0];
+    const isToday = ds === todayStr;
+    const isFuture = ds > todayStr;
+    const label   = isToday ? 'Today' : d.toLocaleDateString('en-GB', { weekday: 'short' });
+    pills.push(`<button class="day-pill ${ds === selectedDate ? 'selected' : ''} ${isToday ? 'is-today' : ''}"
+      style="${isFuture ? 'opacity:0.35;pointer-events:none' : ''}"
+      onclick="selectDate('${ds}', ${d.getDay()})">
+      ${label}<small>${d.getDate()}</small>
+    </button>`);
+  }
+  el.innerHTML = pills.join('');
+}
+
+function renderWorkoutSelector() {
+  const el = document.getElementById('workoutSelector');
+  if (!el) return;
+  const workoutBtns = Object.entries(WORKOUTS).map(([dow, w]) => `
+    <button class="day-pill workout-pill ${workout?.name === w.name ? 'selected' : ''}"
+      onclick="selectWorkout(${dow})">
+      ${w.name}<small>${w.focus}</small>
     </button>`).join('');
+  const restBtn = `<button class="day-pill workout-pill ${workout === null ? 'selected' : ''}"
+    onclick="selectWorkout(0)">
+    Rest<small>Recovery</small>
+  </button>`;
+  el.innerHTML = workoutBtns + restBtn;
 }
 
 function selectWorkout(dow) {
-  selectedDow = dow;
+  selectedDow = parseInt(dow);
   workout = WORKOUTS[dow] || null;
-  renderDaySelector();
+  renderDateSelector();
+  renderWorkoutSelector();
+  renderToday();
+}
+
+function selectDate(dateStr, dow) {
+  selectedDate = dateStr;
+  selectedDow  = WORKOUTS[dow] ? dow : 0;
+  workout      = WORKOUTS[dow] || null;
+  renderDateSelector();
+  renderWorkoutSelector();
   renderToday();
 }
 
@@ -600,7 +715,8 @@ auth.onAuthStateChanged(async user => {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('signin-screen').style.display  = 'none';
     document.getElementById('app').style.display = 'block';
-    renderDaySelector();
+    renderDateSelector();
+    renderWorkoutSelector();
     renderToday();
   } else {
     document.getElementById('loading-screen').style.display = 'none';
@@ -686,7 +802,7 @@ async function logWeightUI() {
 async function logSet(exercise, setIdx, weight, reps) {
   // Remove existing entry for this exercise+set+today
   const existing = allLogs.find(l =>
-    l.date === todayStr && l.exercise === exercise && l.setIdx === setIdx
+    l.date === selectedDate && l.exercise === exercise && l.setIdx === setIdx
   );
   if (existing) {
     await userLogs().doc(existing._id).delete();
@@ -694,7 +810,7 @@ async function logSet(exercise, setIdx, weight, reps) {
   }
   // Add new entry
   const entry = {
-    date: todayStr,
+    date: selectedDate,
     workout: workout?.name || '',
     exercise,
     setIdx,
@@ -721,7 +837,7 @@ function showSyncToast() {
 // ── Derived helpers ───────────────────────────────────────────────────────────
 function getPrevBest(exerciseName) {
   const logs = getLogs()
-    .filter(l => l.exercise === exerciseName && l.date !== todayStr && l.weight > 0)
+    .filter(l => l.exercise === exerciseName && l.date !== selectedDate && l.weight > 0)
     .sort((a, b) => b.date.localeCompare(a.date));
   if (!logs.length) return null;
   const latestDate = logs[0].date;
@@ -731,7 +847,7 @@ function getPrevBest(exerciseName) {
 }
 
 function getTodayLogs(exerciseName) {
-  return getLogs().filter(l => l.date === todayStr && l.exercise === exerciseName);
+  return getLogs().filter(l => l.date === selectedDate && l.exercise === exerciseName);
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -746,7 +862,8 @@ function switchTab(tab) {
 
 // ── Render today ──────────────────────────────────────────────────────────────
 function renderToday() {
-  const dateStr = today.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+  const selDateObj = new Date(selectedDate + 'T12:00:00');
+  const dateStr = selDateObj.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
   document.getElementById('todayDate').textContent = dateStr;
 
   if (!workout) {
@@ -772,7 +889,8 @@ function renderToday() {
       <div class="summary-stat"><div class="val">45-60</div><div class="lbl">Minutes</div></div>
     </div>`;
 
-  workout.exercises.forEach((ex, exIdx) => {
+  workout.exercises.forEach((origEx, exIdx) => {
+    const ex          = swappedExercises[exIdx] ? { ...origEx, ...swappedExercises[exIdx] } : origEx;
     const prev        = getPrevBest(ex.name);
     const todayLogged = getTodayLogs(ex.name);
     const icon        = MUSCLE_ICONS[ex.muscle] || '💪';
@@ -805,8 +923,11 @@ function renderToday() {
         <div class="exercise-img-placeholder" style="display:none">${icon}</div>
         <div class="exercise-body">
           <div class="exercise-header">
-            <div class="exercise-name">${ex.name}</div>
-            <div class="muscle-badge">${ex.muscle}</div>
+            <div class="exercise-name">${ex.name}${swappedExercises[exIdx] ? ' <span style="font-size:11px;color:var(--sub);font-weight:400">(swapped)</span>' : ''}</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="muscle-badge">${ex.muscle}</div>
+              <button class="swap-btn" onclick="openSwap(${exIdx})">⇄</button>
+            </div>
           </div>
           <div class="exercise-meta">
             <div class="meta-chip"><span>${ex.sets}</span> sets</div>
@@ -889,7 +1010,7 @@ function addSet(exIdx, exerciseName) {
 async function removeSetUI(exerciseName, setIdx, rowId, exIdx) {
   // Delete from Firestore if it was logged
   const existing = allLogs.find(l =>
-    l.date === todayStr && l.exercise === exerciseName && l.setIdx === setIdx
+    l.date === selectedDate && l.exercise === exerciseName && l.setIdx === setIdx
   );
   if (existing) {
     await userLogs().doc(existing._id).delete();
@@ -970,6 +1091,50 @@ function renderHistory() {
 function toggleSession(header) {
   header.querySelector('.session-chevron').classList.toggle('open');
   header.nextElementSibling.classList.toggle('open');
+}
+
+// ── Exercise swap ─────────────────────────────────────────────────────────────
+let _swapExIdx = null;
+
+function openSwap(exIdx) {
+  _swapExIdx = exIdx;
+  document.getElementById('swapSearch').value = '';
+  filterSwap('');
+  document.getElementById('swapOverlay').classList.add('open');
+}
+
+function closeSwap(e) {
+  if (e && e.target !== document.getElementById('swapOverlay')) return;
+  document.getElementById('swapOverlay').classList.remove('open');
+  _swapExIdx = null;
+}
+
+function filterSwap(query) {
+  const q = query.toLowerCase().trim();
+  const list = q
+    ? ALL_EXERCISES.filter(ex => ex.name.toLowerCase().includes(q) || ex.muscle.toLowerCase().includes(q))
+    : ALL_EXERCISES;
+  document.getElementById('swapList').innerHTML = list.map(ex => `
+    <div class="swap-item" onclick="doSwap(this)"
+      data-name="${ex.name}" data-imgid="${ex.imgId}" data-muscle="${ex.muscle}">
+      <img class="swap-item-img" src="${IMG_BASE}${ex.imgId}" alt="${ex.name}" onerror="this.style.display='none'">
+      <div>
+        <div class="swap-item-name">${ex.name}</div>
+        <div class="swap-item-badge">${ex.muscle}</div>
+      </div>
+    </div>`).join('');
+}
+
+function doSwap(el) {
+  if (_swapExIdx === null) return;
+  swappedExercises[_swapExIdx] = {
+    name:   el.dataset.name,
+    imgId:  el.dataset.imgid,
+    muscle: el.dataset.muscle
+  };
+  document.getElementById('swapOverlay').classList.remove('open');
+  _swapExIdx = null;
+  renderToday();
 }
 
 // ── Weight tracker ─────────────────────────────────────────────────────────────
