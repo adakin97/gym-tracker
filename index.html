@@ -526,6 +526,49 @@ body {
 .complete-banner.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .complete-banner-close { font-size: 18px; cursor: pointer; opacity: 0.8; padding: 0 0 0 12px; }
 
+/* ── Rocket overlay ── */
+#rocketOverlay {
+  position: fixed; inset: 0; z-index: 600;
+  background: radial-gradient(ellipse at 50% 90%, #0d0d2b 0%, #020208 100%);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+  overflow: hidden; cursor: pointer;
+}
+#rocketOverlay.show { opacity: 1; pointer-events: auto; }
+#rocketStars { position: absolute; inset: 0; }
+.star {
+  position: absolute; background: #fff; border-radius: 50%;
+  animation: starTwinkle 1.5s infinite alternate;
+}
+@keyframes starTwinkle {
+  from { opacity: 0.15; transform: scale(0.7); }
+  to   { opacity: 1;    transform: scale(1.3); }
+}
+.rocket-ship {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  font-size: 80px; line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(255, 120, 40, 0.9));
+  animation: rocketLaunch 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+@keyframes rocketLaunch {
+  0%   { bottom: -120px; opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { bottom: 108%; opacity: 0; }
+}
+.rocket-label {
+  position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
+  color: #fff; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;
+  opacity: 0; animation: labelFade 2.4s forwards;
+  white-space: nowrap;
+}
+@keyframes labelFade {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* ── Swap bottom sheet ── */
 .swap-overlay {
   position: fixed; inset: 0; z-index: 400;
@@ -673,6 +716,12 @@ body {
 <div class="complete-banner" id="completeBanner">
   <span id="completeBannerText">🎉 Workout complete!</span>
   <span class="complete-banner-close" onclick="this.parentElement.classList.remove('show')">✕</span>
+</div>
+
+<div id="rocketOverlay" onclick="document.getElementById('rocketOverlay').classList.remove('show')">
+  <div id="rocketStars"></div>
+  <div class="rocket-ship">🚀</div>
+  <div class="rocket-label">Session Complete!</div>
 </div>
 
 <div class="sync-toast" id="syncToast">Synced to cloud ☁️</div>
@@ -915,9 +964,34 @@ function checkWorkoutComplete() {
 
   cancelRestTimer();
   if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+  showRocketAnimation();
   document.getElementById('completeBannerText').textContent =
     `🎉 Session done · ${Math.round(volume).toLocaleString()} kg total volume`;
   document.getElementById('completeBanner').classList.add('show');
+}
+
+function showRocketAnimation() {
+  const overlay = document.getElementById('rocketOverlay');
+  const starContainer = document.getElementById('rocketStars');
+
+  // Generate random star field
+  starContainer.innerHTML = '';
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${(Math.random()*1.5).toFixed(2)}s;animation-duration:${(0.7+Math.random()*1.4).toFixed(2)}s`;
+    starContainer.appendChild(s);
+  }
+
+  // Reset rocket animation
+  const rocket = overlay.querySelector('.rocket-ship');
+  rocket.style.animation = 'none';
+  rocket.offsetHeight; // force reflow
+  rocket.style.animation = '';
+
+  overlay.classList.add('show');
+  setTimeout(() => overlay.classList.remove('show'), 3200);
 }
 
 function selectWorkout(dow) {
