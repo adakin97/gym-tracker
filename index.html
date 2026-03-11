@@ -516,17 +516,21 @@ body {
 
 /* ── Workout complete banner ── */
 .complete-banner {
-  position: fixed; bottom: 90px; left: 16px; right: 16px;
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -44%) scale(0.92);
+  width: calc(100% - 48px); max-width: 360px;
   background: var(--green); color: #fff;
-  padding: 14px 18px; border-radius: 14px;
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: 14px; font-weight: 700;
-  opacity: 0; transform: translateY(16px);
-  transition: opacity 0.35s, transform 0.35s;
-  pointer-events: none; z-index: 201;
+  padding: 32px 24px 24px; border-radius: 20px;
+  text-align: center;
+  opacity: 0; transition: opacity 0.4s, transform 0.4s;
+  pointer-events: none; z-index: 400;
 }
-.complete-banner.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-.complete-banner-close { font-size: 18px; cursor: pointer; opacity: 0.8; padding: 0 0 0 12px; }
+.complete-banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.complete-banner-title { font-size: 26px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 20px; }
+.complete-banner-stats { display: flex; justify-content: center; gap: 32px; margin-bottom: 24px; }
+.complete-banner-stat-val { font-size: 28px; font-weight: 800; }
+.complete-banner-stat-lbl { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.complete-banner-tap { font-size: 12px; opacity: 0.7; cursor: pointer; }
 
 /* ── Rocket overlay ── */
 #rocketOverlay {
@@ -550,7 +554,7 @@ body {
   position: absolute; left: 50%; transform: translateX(-50%);
   font-size: 80px; line-height: 1;
   filter: drop-shadow(0 0 20px rgba(255, 120, 40, 0.9));
-  animation: rocketLaunch 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: rocketLaunch 4s cubic-bezier(0.15, 0, 0.45, 1) forwards;
 }
 @keyframes rocketLaunch {
   0%   { bottom: -120px; opacity: 0; }
@@ -561,7 +565,7 @@ body {
 .rocket-label {
   position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
   color: #fff; font-size: 22px; font-weight: 700; letter-spacing: -0.3px;
-  opacity: 0; animation: labelFade 2.4s forwards;
+  opacity: 0; animation: labelFade 4s forwards;
   white-space: nowrap;
 }
 @keyframes labelFade {
@@ -715,9 +719,10 @@ body {
   <span class="rest-skip" onclick="cancelRestTimer()">Skip ✕</span>
 </div>
 
-<div class="complete-banner" id="completeBanner">
-  <span id="completeBannerText">🎉 Workout complete!</span>
-  <span class="complete-banner-close" onclick="this.parentElement.classList.remove('show')">✕</span>
+<div class="complete-banner" id="completeBanner" onclick="this.classList.remove('show')">
+  <div class="complete-banner-title">Session Complete! 🎉</div>
+  <div class="complete-banner-stats" id="completeBannerStats"></div>
+  <div class="complete-banner-tap">Tap to dismiss</div>
 </div>
 
 <div id="rocketOverlay" onclick="document.getElementById('rocketOverlay').classList.remove('show')">
@@ -822,6 +827,7 @@ let scheduledDow       = todayDow;
 let summaryOpen        = true;
 let selectedGraphEx    = null;       // currently selected exercise in Graphs tab
 const swappedExercises = {};
+let workoutStartTime   = null;
 
 // All exercises across all workouts — pool for the swap feature
 const ALL_EXERCISES = (() => {
@@ -900,6 +906,7 @@ function closeWorkoutPicker() {
 function clearSwaps() {
   Object.keys(swappedExercises).forEach(k => delete swappedExercises[k]);
   cancelRestTimer();
+  workoutStartTime = null;
   document.getElementById('completeBanner')?.classList.remove('show');
 }
 
@@ -967,8 +974,19 @@ function checkWorkoutComplete() {
   cancelRestTimer();
   if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
   showRocketAnimation();
-  document.getElementById('completeBannerText').textContent =
-    `🎉 Session done · ${Math.round(volume).toLocaleString()} kg total volume`;
+
+  const durationHtml = workoutStartTime ? (() => {
+    const mins = Math.round((Date.now() - workoutStartTime) / 60000);
+    const dur  = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins} min`;
+    return `<div class="complete-banner-stat"><div class="complete-banner-stat-val">${dur}</div><div class="complete-banner-stat-lbl">Duration</div></div>`;
+  })() : '';
+
+  document.getElementById('completeBannerStats').innerHTML = `
+    <div class="complete-banner-stat">
+      <div class="complete-banner-stat-val">${Math.round(volume).toLocaleString()}</div>
+      <div class="complete-banner-stat-lbl">kg volume</div>
+    </div>
+    ${durationHtml}`;
   document.getElementById('completeBanner').classList.add('show');
 }
 
@@ -993,7 +1011,7 @@ function showRocketAnimation() {
   rocket.style.animation = '';
 
   overlay.classList.add('show');
-  setTimeout(() => overlay.classList.remove('show'), 3200);
+  setTimeout(() => overlay.classList.remove('show'), 4800);
 }
 
 function selectWorkout(dow) {
@@ -1336,6 +1354,11 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
   const weight = document.getElementById(`w-${exIdx}-${setIdx}`).value;
   const reps   = document.getElementById(`r-${exIdx}-${setIdx}`).value;
   if (!weight && !reps) return;
+
+  // Start workout timer on first set of this session
+  if (!workoutStartTime && allLogs.filter(l => l.date === selectedDate).length === 0) {
+    workoutStartTime = Date.now();
+  }
 
   btn.textContent = '…';
   await logSet(exerciseName, setIdx, weight || 0, reps || 0);
