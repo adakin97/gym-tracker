@@ -367,6 +367,8 @@ body {
 .session-card-header .session-summary { font-size: 12px; color: var(--sub); margin-top: 2px; }
 .session-chevron { color: var(--sub); font-size: 12px; transition: transform 0.2s; }
 .session-chevron.open { transform: rotate(90deg); }
+.session-del-btn { background: none; border: none; color: var(--border); font-size: 16px; cursor: pointer; padding: 4px; line-height: 1; transition: color 0.15s; }
+.session-del-btn:active { color: var(--accent); }
 .session-detail { display: none; padding: 0 14px 12px; }
 .session-detail.open { display: block; }
 .session-exercise { margin-bottom: 10px; }
@@ -1090,6 +1092,14 @@ async function deleteWeight(id) {
   renderWeight();
 }
 
+async function deleteSession(date) {
+  const toDelete = allLogs.filter(l => l.date === date);
+  await Promise.all(toDelete.map(l => userLogs().doc(l._id).delete()));
+  allLogs = allLogs.filter(l => l.date !== date);
+  renderHistory();
+}
+window.deleteSession = deleteSession;
+
 async function logWeightUI() {
   const input = document.getElementById('weightInput');
   const val   = parseFloat(input.value);
@@ -1234,7 +1244,8 @@ function renderToday() {
     const prev        = getPrevBest(ex.name);
     const todayLogged = getTodayLogs(ex.name);
     const icon        = MUSCLE_ICONS[ex.muscle] || '💪';
-    const progressPct = Math.round((todayLogged.length / ex.sets) * 100);
+    const totalSetsEx = ex.sets + (extraSets[exIdx] || 0);
+    const progressPct = Math.round((todayLogged.length / totalSetsEx) * 100);
 
     let setRowsHtml = '';
     for (let s = 0; s < ex.sets; s++) {
@@ -1286,7 +1297,7 @@ function renderToday() {
           <div class="progress-bar-wrap">
             <div class="progress-bar-label">
               <span>Progress</span>
-              <span id="prog-label-${exIdx}">${todayLogged.length}/${ex.sets} sets</span>
+              <span id="prog-label-${exIdx}">${todayLogged.length}/${totalSetsEx} sets</span>
             </div>
             <div class="progress-bar-track">
               <div class="progress-bar-fill" id="prog-${exIdx}" style="width:${progressPct}%"></div>
@@ -1343,12 +1354,13 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
 
 function updateProgress(exIdx, exerciseName) {
   const ex     = workout.exercises[exIdx];
+  const total  = ex.sets + (extraSets[exIdx] || 0);
   const logged = getTodayLogs(exerciseName);
-  const pct    = Math.round((logged.length / ex.sets) * 100);
+  const pct    = Math.round((logged.length / total) * 100);
   const bar    = document.getElementById(`prog-${exIdx}`);
   const lbl    = document.getElementById(`prog-label-${exIdx}`);
   if (bar) bar.style.width = pct + '%';
-  if (lbl) lbl.textContent = `${logged.length}/${ex.sets} sets`;
+  if (lbl) lbl.textContent = `${logged.length}/${total} sets`;
 }
 
 function addSet(exIdx, exerciseName) {
@@ -1444,7 +1456,10 @@ function renderHistory() {
               <h3>${workoutName}</h3>
               <div class="session-summary">${exNames.length} exercises · ${totalSets} sets logged</div>
             </div>
-            <span class="session-chevron">›</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="session-del-btn" onclick="event.stopPropagation();deleteSession('${date}')">×</button>
+              <span class="session-chevron">›</span>
+            </div>
           </div>
           <div class="session-detail">${exerciseDetails}</div>
         </div>
