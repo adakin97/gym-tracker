@@ -455,6 +455,29 @@ body {
 /* ── Progressive overload nudge ── */
 .overload-nudge { font-size: 12px; color: var(--green); font-weight: 700; margin-left: 4px; }
 
+/* ── Workout overview card ── */
+.overview-card { background: var(--card); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
+.overview-header {
+  padding: 12px 16px; display: flex; justify-content: space-between;
+  align-items: center; cursor: pointer; user-select: none;
+}
+.overview-header-left { display: flex; flex-direction: column; gap: 3px; }
+.overview-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--sub); }
+.overview-stats { display: flex; gap: 14px; }
+.overview-stat { font-size: 13px; color: var(--sub); }
+.overview-stat b { color: var(--text); font-weight: 700; }
+.overview-chevron { color: var(--sub); font-size: 16px; transition: transform 0.2s; flex-shrink: 0; }
+.overview-chevron.open { transform: rotate(180deg); }
+.overview-list { border-top: 1px solid var(--border); padding: 4px 0 6px; }
+.overview-row {
+  display: grid; grid-template-columns: 22px 1fr auto;
+  gap: 6px; padding: 7px 16px; align-items: center;
+}
+.overview-num { font-size: 11px; color: var(--border); font-weight: 700; text-align: right; }
+.overview-name { font-size: 13px; font-weight: 600; }
+.overview-muscle { font-size: 11px; color: var(--sub); margin-top: 1px; }
+.overview-sets { font-size: 12px; color: var(--sub); white-space: nowrap; text-align: right; }
+
 /* ── Rest timer ── */
 .rest-timer {
   position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
@@ -713,9 +736,10 @@ let currentUser = null;
 let allLogs     = [];
 let allWeights  = [];
 const extraSets = {};
-let selectedDate       = todayStr;   // which date to log for (may differ from today)
-let scheduledDow       = todayDow;   // scheduled workout for the selected date (for the indicator)
-const swappedExercises = {};         // exIdx → { name, imgId, muscle }
+let selectedDate       = todayStr;
+let scheduledDow       = todayDow;
+let summaryOpen        = true;       // workout overview card open/closed
+const swappedExercises = {};
 
 // All exercises across all workouts — pool for the swap feature
 const ALL_EXERCISES = (() => {
@@ -867,6 +891,7 @@ function checkWorkoutComplete() {
 function selectWorkout(dow) {
   selectedDow = parseInt(dow);
   workout = WORKOUTS[dow] || null;
+  summaryOpen = true;
   clearSwaps();
   renderDateSelector();
   renderWorkoutSelector();
@@ -1064,11 +1089,36 @@ function renderToday() {
   document.getElementById('workoutTitle').textContent = workout.name;
 
   const totalSets = workout.exercises.reduce((s, e) => s + e.sets, 0);
+
+  const overviewRows = workout.exercises.map((origEx, i) => {
+    const ex = swappedExercises[i] ? { ...origEx, ...swappedExercises[i] } : origEx;
+    return `
+      <div class="overview-row">
+        <span class="overview-num">${i + 1}</span>
+        <div>
+          <div class="overview-name">${ex.name}</div>
+          <div class="overview-muscle">${ex.muscle}</div>
+        </div>
+        <div class="overview-sets">${ex.sets} × ${ex.reps}</div>
+      </div>`;
+  }).join('');
+
   let html = `
-    <div class="summary-bar">
-      <div class="summary-stat"><div class="val">${workout.exercises.length}</div><div class="lbl">Exercises</div></div>
-      <div class="summary-stat"><div class="val">${totalSets}</div><div class="lbl">Total Sets</div></div>
-      <div class="summary-stat"><div class="val">45-60</div><div class="lbl">Minutes</div></div>
+    <div class="overview-card">
+      <div class="overview-header" onclick="toggleSummary()">
+        <div class="overview-header-left">
+          <span class="overview-label">${workout.focus}</span>
+          <div class="overview-stats">
+            <span class="overview-stat"><b>${workout.exercises.length}</b> exercises</span>
+            <span class="overview-stat"><b>${totalSets}</b> sets</span>
+            <span class="overview-stat"><b>45-60</b> min</span>
+          </div>
+        </div>
+        <span class="overview-chevron ${summaryOpen ? 'open' : ''}" id="overviewChevron">▾</span>
+      </div>
+      <div class="overview-list" id="overviewList" style="display:${summaryOpen ? 'block' : 'none'}">
+        ${overviewRows}
+      </div>
     </div>`;
 
   workout.exercises.forEach((origEx, exIdx) => {
@@ -1297,6 +1347,15 @@ function renderHistory() {
 function toggleSession(header) {
   header.querySelector('.session-chevron').classList.toggle('open');
   header.nextElementSibling.classList.toggle('open');
+}
+
+// ── Workout overview toggle ───────────────────────────────────────────────────
+function toggleSummary() {
+  summaryOpen = !summaryOpen;
+  const list    = document.getElementById('overviewList');
+  const chevron = document.getElementById('overviewChevron');
+  if (list)    list.style.display = summaryOpen ? 'block' : 'none';
+  if (chevron) chevron.classList.toggle('open', summaryOpen);
 }
 
 // ── Exercise swap ─────────────────────────────────────────────────────────────
