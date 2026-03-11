@@ -416,6 +416,7 @@ body {
   transition: all 0.15s;
 }
 .workout-pill.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.workout-pill.scheduled-workout:not(.selected) { border-color: var(--green); color: var(--green); }
 .workout-pill small { font-size: 9px; font-weight: 400; display: block; letter-spacing: 0.3px; }
 
 /* ── Swap button ── */
@@ -462,6 +463,11 @@ body {
 .swap-item-img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; background: var(--card2); flex-shrink: 0; }
 .swap-item-name { font-size: 14px; font-weight: 600; }
 .swap-item-badge { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.swap-default-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  background: var(--card2); color: var(--sub);
+  padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: middle;
+}
 </style>
 </head>
 <body>
@@ -639,6 +645,7 @@ let allLogs     = [];
 let allWeights  = [];
 const extraSets = {};
 let selectedDate       = todayStr;   // which date to log for (may differ from today)
+let scheduledDow       = todayDow;   // scheduled workout for the selected date (for the indicator)
 const swappedExercises = {};         // exIdx → { name, imgId, muscle }
 
 // All exercises across all workouts — pool for the swap feature
@@ -677,14 +684,17 @@ function renderDateSelector() {
 function renderWorkoutSelector() {
   const el = document.getElementById('workoutSelector');
   if (!el) return;
-  const workoutBtns = Object.entries(WORKOUTS).map(([dow, w]) => `
-    <button class="day-pill workout-pill ${workout?.name === w.name ? 'selected' : ''}"
+  const workoutBtns = Object.entries(WORKOUTS).map(([dow, w]) => {
+    const isScheduled = parseInt(dow) === scheduledDow;
+    return `<button class="day-pill workout-pill ${workout?.name === w.name ? 'selected' : ''} ${isScheduled ? 'scheduled-workout' : ''}"
       onclick="selectWorkout(${dow})">
-      ${w.name}<small>${w.focus}</small>
-    </button>`).join('');
-  const restBtn = `<button class="day-pill workout-pill ${workout === null ? 'selected' : ''}"
+      ${w.name}<small>${isScheduled ? '✓ Scheduled' : w.focus}</small>
+    </button>`;
+  }).join('');
+  const restIsScheduled = !WORKOUTS[scheduledDow];
+  const restBtn = `<button class="day-pill workout-pill ${workout === null ? 'selected' : ''} ${restIsScheduled ? 'scheduled-workout' : ''}"
     onclick="selectWorkout(0)">
-    Rest<small>Recovery</small>
+    Rest<small>${restIsScheduled ? '✓ Scheduled' : 'Recovery'}</small>
   </button>`;
   el.innerHTML = workoutBtns + restBtn;
 }
@@ -699,6 +709,7 @@ function selectWorkout(dow) {
 
 function selectDate(dateStr, dow) {
   selectedDate = dateStr;
+  scheduledDow = dow;
   selectedDow  = WORKOUTS[dow] ? dow : 0;
   workout      = WORKOUTS[dow] || null;
   renderDateSelector();
@@ -1110,19 +1121,23 @@ function closeSwap(e) {
 }
 
 function filterSwap(query) {
-  const q = query.toLowerCase().trim();
-  const list = q
+  const q        = query.toLowerCase().trim();
+  const origName = workout?.exercises[_swapExIdx]?.name;
+  const list     = q
     ? ALL_EXERCISES.filter(ex => ex.name.toLowerCase().includes(q) || ex.muscle.toLowerCase().includes(q))
     : ALL_EXERCISES;
-  document.getElementById('swapList').innerHTML = list.map(ex => `
+  document.getElementById('swapList').innerHTML = list.map(ex => {
+    const isDefault = ex.name === origName;
+    return `
     <div class="swap-item" onclick="doSwap(this)"
       data-name="${ex.name}" data-imgid="${ex.imgId}" data-muscle="${ex.muscle}">
       <img class="swap-item-img" src="${IMG_BASE}${ex.imgId}" alt="${ex.name}" onerror="this.style.display='none'">
       <div>
-        <div class="swap-item-name">${ex.name}</div>
+        <div class="swap-item-name">${ex.name}${isDefault ? ' <span class="swap-default-badge">Default</span>' : ''}</div>
         <div class="swap-item-badge">${ex.muscle}</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function doSwap(el) {
