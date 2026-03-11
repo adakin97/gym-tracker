@@ -455,6 +455,22 @@ body {
 /* ── Progressive overload nudge ── */
 .overload-nudge { font-size: 12px; color: var(--green); font-weight: 700; margin-left: 4px; }
 
+/* ── Graphs tab ── */
+.graph-card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.graph-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--sub); margin-bottom: 14px; }
+.graph-select {
+  width: 100%; padding: 10px 14px; margin-bottom: 16px;
+  background: var(--card2); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 14px; font-weight: 600;
+  outline: none; -webkit-appearance: none; appearance: none;
+}
+.graph-select:focus { border-color: var(--accent); }
+.graph-stats { display: flex; justify-content: space-around; margin-bottom: 16px; }
+.graph-stat { text-align: center; }
+.graph-stat-val { font-size: 20px; font-weight: 700; }
+.graph-stat-lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.graph-empty { text-align: center; padding: 24px 0; color: var(--sub); font-size: 13px; }
+
 /* ── Workout overview card ── */
 .overview-card { background: var(--card); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
 .overview-header {
@@ -598,6 +614,10 @@ body {
     <div id="weightContent"></div>
   </div>
 
+  <div class="view" id="view-graphs">
+    <div id="graphsContent"></div>
+  </div>
+
   <nav class="nav">
     <button class="nav-btn active" id="nav-today" onclick="switchTab('today')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -618,6 +638,13 @@ body {
         <polyline points="17 6 23 6 23 12"/>
       </svg>
       Weight
+    </button>
+    <button class="nav-btn" id="nav-graphs" onclick="switchTab('graphs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
+      </svg>
+      Graphs
     </button>
   </nav>
 </div>
@@ -738,7 +765,8 @@ let allWeights  = [];
 const extraSets = {};
 let selectedDate       = todayStr;
 let scheduledDow       = todayDow;
-let summaryOpen        = true;       // workout overview card open/closed
+let summaryOpen        = true;
+let selectedGraphEx    = null;       // currently selected exercise in Graphs tab
 const swappedExercises = {};
 
 // All exercises across all workouts — pool for the swap feature
@@ -1067,6 +1095,7 @@ function switchTab(tab) {
   document.getElementById('nav-' + tab).classList.add('active');
   if (tab === 'history') renderHistory();
   if (tab === 'weight')  renderWeight();
+  if (tab === 'graphs')  renderGraphs();
 }
 
 // ── Render today ──────────────────────────────────────────────────────────────
@@ -1529,6 +1558,154 @@ function buildWeightChart() {
       <text x="${W - PR + 2}" y="${goalY + 4}" fill="#30d158" font-size="9">Goal</text>
       <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
       ${dots}
+      ${xLabels}
+      ${yLabels}
+    </svg>`;
+}
+
+// ── Graphs tab ────────────────────────────────────────────────────────────────
+function getExerciseHistory(name) {
+  const byDate = {};
+  allLogs.filter(l => l.exercise === name && l.weight > 0).forEach(l => {
+    if (!byDate[l.date] || byDate[l.date] < l.weight) byDate[l.date] = l.weight;
+  });
+  return Object.entries(byDate)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, weight]) => ({ date, weight }));
+}
+
+function selectGraphEx(name) {
+  selectedGraphEx = name;
+  renderGraphs();
+}
+
+function renderGraphs() {
+  const container = document.getElementById('graphsContent');
+  if (!container) return;
+
+  // ── Exercise progress ──
+  const names = [...new Set(allLogs.filter(l => l.weight > 0).map(l => l.exercise))].sort();
+  if (!selectedGraphEx || !names.includes(selectedGraphEx)) selectedGraphEx = names[0] || null;
+
+  let exHtml = '';
+  if (!names.length) {
+    exHtml = `<div class="graph-card"><div class="graph-section-title">Exercise Progress</div><div class="graph-empty">No workout logs yet — log some sets to see your progress here.</div></div>`;
+  } else {
+    const opts    = names.map(n => `<option value="${n}" ${n === selectedGraphEx ? 'selected' : ''}>${n}</option>`).join('');
+    const history = selectedGraphEx ? getExerciseHistory(selectedGraphEx) : [];
+    let inner = '';
+    if (history.length < 2) {
+      inner = `<div class="graph-empty">Log at least 2 sessions of this exercise to see a trend.</div>`;
+    } else {
+      const peak    = Math.max(...history.map(h => h.weight));
+      const latest  = history[history.length - 1].weight;
+      const first   = history[0].weight;
+      const gained  = +(latest - first).toFixed(1);
+      inner = `
+        <div class="graph-stats">
+          <div class="graph-stat"><div class="graph-stat-val">${peak}</div><div class="graph-stat-lbl">Peak (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--accent)">${latest}</div><div class="graph-stat-lbl">Latest (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--green)">+${gained}</div><div class="graph-stat-lbl">Progress (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val">${history.length}</div><div class="graph-stat-lbl">Sessions</div></div>
+        </div>
+        ${buildProgressChart(history, { gradId: 'exGrad', color: '#ff3b30' })}`;
+    }
+    exHtml = `
+      <div class="graph-card">
+        <div class="graph-section-title">Exercise Progress</div>
+        <select class="graph-select" onchange="selectGraphEx(this.value)">${opts}</select>
+        ${inner}
+      </div>`;
+  }
+
+  // ── Body weight ──
+  let bwHtml = '';
+  if (allWeights.length < 2) {
+    bwHtml = `<div class="graph-card"><div class="graph-section-title">Body Weight</div><div class="graph-empty">Log at least 2 weigh-ins to see your trend here.</div></div>`;
+  } else {
+    const latest = allWeights[allWeights.length - 1].weight;
+    const start  = allWeights[0].weight;
+    const gained = +(latest - start).toFixed(1);
+    const toGo   = +(WEIGHT_GOAL - latest).toFixed(1);
+    bwHtml = `
+      <div class="graph-card">
+        <div class="graph-section-title">Body Weight</div>
+        <div class="graph-stats">
+          <div class="graph-stat"><div class="graph-stat-val">${start}</div><div class="graph-stat-lbl">Start (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--accent)">${latest}</div><div class="graph-stat-lbl">Current (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--green)">+${gained}</div><div class="graph-stat-lbl">Gained (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val">${toGo > 0 ? toGo : 0}</div><div class="graph-stat-lbl">To Goal (kg)</div></div>
+        </div>
+        ${buildProgressChart(allWeights.map(w => ({ date: w.date, weight: w.weight })), { gradId: 'bwGrad', color: '#30d158', goalVal: WEIGHT_GOAL })}
+      </div>`;
+  }
+
+  container.innerHTML = exHtml + bwHtml;
+}
+
+function buildProgressChart(data, { gradId = 'grad', color = '#ff3b30', goalVal = null } = {}) {
+  const W = 300, H = 160, PL = 36, PR = goalVal ? 30 : 10, PT = 20, PB = 28;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const vals   = data.map(d => d.weight);
+  const spread = Math.max(1, Math.max(...vals) - Math.min(...vals));
+  const minV   = Math.min(...vals) - spread * 0.15;
+  const maxV   = Math.max(...vals, goalVal || 0) + spread * 0.15;
+  const range  = maxV - minV || 1;
+
+  const toX = i => data.length < 2 ? PL + chartW / 2 : PL + (i / (data.length - 1)) * chartW;
+  const toY = v => PT + ((maxV - v) / range) * chartH;
+
+  // Area fill path
+  const linePts  = data.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
+  const areaPath = `M${toX(0)},${toY(data[0].weight)} `
+    + data.map((d, i) => `L${toX(i)},${toY(d.weight)}`).join(' ')
+    + ` L${toX(data.length - 1)},${H - PB} L${toX(0)},${H - PB} Z`;
+
+  // Dots — last one larger and labelled
+  const dots = data.map((d, i) => {
+    const isLast = i === data.length - 1;
+    return `<circle cx="${toX(i)}" cy="${toY(d.weight)}" r="${isLast ? 4 : 2.5}"
+      fill="${isLast ? color : '#1c1c1e'}" stroke="${color}" stroke-width="1.5"/>`;
+  }).join('');
+
+  const last = data[data.length - 1];
+  const lastLabel = `<text x="${toX(data.length - 1)}" y="${toY(last.weight) - 9}"
+    text-anchor="${data.length > 1 ? 'end' : 'middle'}" fill="${color}" font-size="10" font-weight="700">${last.weight} kg</text>`;
+
+  // X-axis labels
+  const idxs = data.length < 3 ? [0, data.length - 1] :
+    [0, Math.floor((data.length - 1) / 2), data.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+  const xLabels = idxs.map(i => {
+    const label = new Date(data[i].date + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    return `<text x="${toX(i)}" y="${H - 6}" text-anchor="middle" fill="#8e8e93" font-size="9">${label}</text>`;
+  }).join('');
+
+  // Y-axis labels
+  const ySteps = [minV, (minV + maxV) / 2, maxV].map(Math.round);
+  const yLabels = ySteps.map(v =>
+    `<text x="${PL - 4}" y="${toY(v) + 4}" text-anchor="end" fill="#8e8e93" font-size="9">${v}</text>`
+  ).join('');
+
+  // Goal line
+  const goalLine = goalVal != null ? `
+    <line x1="${PL}" y1="${toY(goalVal)}" x2="${W - PR}" y2="${toY(goalVal)}"
+      stroke="#30d158" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>
+    <text x="${W - PR + 2}" y="${toY(goalVal) + 4}" fill="#30d158" font-size="9">Goal</text>` : '';
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${goalLine}
+      <path d="${areaPath}" fill="url(#${gradId})"/>
+      <polyline points="${linePts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+      ${dots}
+      ${lastLabel}
       ${xLabels}
       ${yLabels}
     </svg>`;
