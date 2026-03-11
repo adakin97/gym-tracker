@@ -349,6 +349,50 @@ body {
 .session-set-row .set-label { color: var(--sub); min-width: 36px; }
 .session-set-row .set-data { color: var(--text); font-weight: 600; }
 
+/* ── Weight tracker ── */
+.weight-entry-card, .weight-goal-card, .weight-chart-card, .weight-history-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.weight-entry-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.weight-entry-date  { font-size: 13px; color: var(--sub); margin-bottom: 14px; }
+.weight-input-row   { display: flex; align-items: center; gap: 10px; }
+.weight-input {
+  background: var(--card2); border: 1.5px solid var(--border);
+  border-radius: 10px; color: var(--text);
+  font-size: 28px; font-weight: 700; padding: 10px 14px;
+  width: 130px; text-align: center; -webkit-appearance: none; outline: none;
+  transition: border-color 0.15s;
+}
+.weight-input:focus { border-color: var(--accent); }
+.weight-unit { font-size: 20px; color: var(--sub); font-weight: 600; }
+.weight-log-btn {
+  flex: 1; padding: 12px;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 700; cursor: pointer;
+}
+.weight-log-btn:active { opacity: 0.8; }
+.weight-logged-today { font-size: 12px; color: var(--sub); margin-top: 10px; }
+.weight-goal-title, .weight-section-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--sub); margin-bottom: 14px;
+}
+.weight-goal-stats { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.weight-stat { text-align: center; }
+.weight-stat-val { font-size: 22px; font-weight: 700; }
+.weight-stat-lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.weight-history-row {
+  display: flex; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--border); gap: 8px;
+}
+.weight-history-row:last-child { border-bottom: none; }
+.weight-history-date { font-size: 13px; color: var(--sub); flex: 1; }
+.weight-history-val  { font-size: 15px; font-weight: 700; }
+.weight-history-diff { font-size: 13px; font-weight: 600; min-width: 40px; text-align: right; }
+
 /* ── Sync indicator ── */
 .sync-toast {
   position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
@@ -403,6 +447,10 @@ body {
     <div id="historyContent"></div>
   </div>
 
+  <div class="view" id="view-weight">
+    <div id="weightContent"></div>
+  </div>
+
   <nav class="nav">
     <button class="nav-btn active" id="nav-today" onclick="switchTab('today')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -416,6 +464,13 @@ body {
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
       </svg>
       History
+    </button>
+    <button class="nav-btn" id="nav-weight" onclick="switchTab('weight')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+      Weight
     </button>
   </nav>
 </div>
@@ -509,6 +564,7 @@ let selectedDow = todayDow;
 let workout     = WORKOUTS[selectedDow] || null;
 let currentUser = null;
 let allLogs     = [];
+let allWeights  = [];
 const extraSets = {};
 
 const WORKOUT_DAYS = [
@@ -540,6 +596,7 @@ auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
     await loadLogs();
+    await loadWeights();
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('signin-screen').style.display  = 'none';
     document.getElementById('app').style.display = 'block';
@@ -590,6 +647,41 @@ async function loadLogs() {
 }
 
 function getLogs() { return allLogs; }
+
+// ── Weight Firestore helpers ───────────────────────────────────────────────────
+function userWeights() {
+  return db.collection('users').doc(currentUser.uid).collection('weights');
+}
+
+async function loadWeights() {
+  const snapshot = await userWeights().get();
+  allWeights = snapshot.docs.map(d => ({ _id: d.id, ...d.data() }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function logWeightUI() {
+  const input = document.getElementById('weightInput');
+  const val   = parseFloat(input.value);
+  if (!val || val < 30 || val > 200) return;
+
+  const btn = document.getElementById('weightLogBtn');
+  btn.textContent = '…';
+  btn.disabled = true;
+
+  const existing = allWeights.find(w => w.date === todayStr);
+  if (existing) {
+    await userWeights().doc(existing._id).delete();
+    allWeights = allWeights.filter(w => w._id !== existing._id);
+  }
+
+  const entry = { date: todayStr, weight: val, ts: Date.now() };
+  const ref   = await userWeights().add(entry);
+  allWeights.push({ _id: ref.id, ...entry });
+  allWeights.sort((a, b) => a.date.localeCompare(b.date));
+
+  showSyncToast();
+  renderWeight();
+}
 
 async function logSet(exercise, setIdx, weight, reps) {
   // Remove existing entry for this exercise+set+today
@@ -649,6 +741,7 @@ function switchTab(tab) {
   document.getElementById('view-' + tab).classList.add('active');
   document.getElementById('nav-' + tab).classList.add('active');
   if (tab === 'history') renderHistory();
+  if (tab === 'weight')  renderWeight();
 }
 
 // ── Render today ──────────────────────────────────────────────────────────────
@@ -877,6 +970,133 @@ function renderHistory() {
 function toggleSession(header) {
   header.querySelector('.session-chevron').classList.toggle('open');
   header.nextElementSibling.classList.toggle('open');
+}
+
+// ── Weight tracker ─────────────────────────────────────────────────────────────
+const WEIGHT_START = 63;
+const WEIGHT_GOAL  = 70;
+
+function renderWeight() {
+  const container  = document.getElementById('weightContent');
+  const dateLabel  = today.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
+  const todayEntry = allWeights.find(w => w.date === todayStr);
+  const latest     = allWeights.length ? allWeights[allWeights.length - 1] : null;
+  const current    = latest ? latest.weight : WEIGHT_START;
+  const gained     = +(current - WEIGHT_START).toFixed(1);
+  const remaining  = +(WEIGHT_GOAL - current).toFixed(1);
+  const pct        = Math.min(100, Math.max(0, Math.round(((current - WEIGHT_START) / (WEIGHT_GOAL - WEIGHT_START)) * 100)));
+
+  const recent   = [...allWeights].reverse().slice(0, 10);
+  const histRows = recent.map((w, i) => {
+    const prev    = recent[i + 1];
+    const diff    = prev ? +(w.weight - prev.weight).toFixed(1) : null;
+    const diffStr = diff === null ? '' : (diff > 0 ? `+${diff}` : `${diff}`);
+    const diffCol = diff === null ? 'var(--sub)' : diff > 0 ? 'var(--green)' : 'var(--accent)';
+    const d = new Date(w.date + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    return `
+      <div class="weight-history-row">
+        <span class="weight-history-date">${d}</span>
+        <span class="weight-history-val">${w.weight} kg</span>
+        <span class="weight-history-diff" style="color:${diffCol}">${diffStr}</span>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="weight-entry-card">
+      <div class="weight-entry-title">Log Weight</div>
+      <div class="weight-entry-date">${dateLabel}</div>
+      <div class="weight-input-row">
+        <input class="weight-input" type="number" inputmode="decimal" step="0.1" min="30" max="200"
+          id="weightInput" placeholder="${todayEntry ? todayEntry.weight : '0.0'}">
+        <span class="weight-unit">kg</span>
+        <button class="weight-log-btn" id="weightLogBtn" onclick="logWeightUI()">Log</button>
+      </div>
+      ${todayEntry ? `<div class="weight-logged-today">Logged today: ${todayEntry.weight} kg</div>` : ''}
+    </div>
+    <div class="weight-goal-card">
+      <div class="weight-goal-title">Goal Progress</div>
+      <div class="weight-goal-stats">
+        <div class="weight-stat">
+          <div class="weight-stat-val">${WEIGHT_START}</div>
+          <div class="weight-stat-lbl">Start (kg)</div>
+        </div>
+        <div class="weight-stat">
+          <div class="weight-stat-val" style="color:var(--accent)">${current}</div>
+          <div class="weight-stat-lbl">Current (kg)</div>
+        </div>
+        <div class="weight-stat">
+          <div class="weight-stat-val" style="color:var(--green)">${WEIGHT_GOAL}</div>
+          <div class="weight-stat-lbl">Goal (kg)</div>
+        </div>
+        <div class="weight-stat">
+          <div class="weight-stat-val">${remaining > 0 ? remaining : 0}</div>
+          <div class="weight-stat-lbl">To Go (kg)</div>
+        </div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:14px">
+        <div class="progress-bar-label">
+          <span>+${gained} kg gained</span><span>${pct}%</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+    </div>
+    ${allWeights.length > 1 ? `
+    <div class="weight-chart-card">
+      <div class="weight-section-title">Progress Chart</div>
+      ${buildWeightChart()}
+    </div>` : ''}
+    ${allWeights.length ? `
+    <div class="weight-history-card">
+      <div class="weight-section-title">Recent Entries</div>
+      ${histRows}
+    </div>` : ''}`;
+}
+
+function buildWeightChart() {
+  const W = 300, H = 140, PL = 36, PR = 24, PT = 12, PB = 28;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const data   = allWeights;
+  const vals   = data.map(d => d.weight);
+  const minV   = Math.min(...vals, WEIGHT_START) - 1;
+  const maxV   = Math.max(...vals, WEIGHT_GOAL)  + 1;
+  const range  = maxV - minV;
+
+  const toX = i => PL + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW);
+  const toY = v => PT + ((maxV - v) / range) * chartH;
+
+  const points = data.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
+  const goalY  = toY(WEIGHT_GOAL);
+
+  const labelIndices = data.length === 1
+    ? [0]
+    : [0, Math.floor((data.length - 1) / 2), data.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+
+  const xLabels = labelIndices.map(i => {
+    const d = new Date(data[i].date + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+    return `<text x="${toX(i)}" y="${H - 6}" text-anchor="middle" fill="#8e8e93" font-size="9">${d}</text>`;
+  }).join('');
+
+  const yLabels = [Math.round(minV + 1), WEIGHT_GOAL].map(v =>
+    `<text x="${PL - 4}" y="${toY(v) + 4}" text-anchor="end" fill="#8e8e93" font-size="9">${v}</text>`
+  ).join('');
+
+  const dots = data.map((d, i) =>
+    `<circle cx="${toX(i)}" cy="${toY(d.weight)}" r="3" fill="var(--accent)"/>`
+  ).join('');
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
+      <line x1="${PL}" y1="${goalY}" x2="${W - PR}" y2="${goalY}"
+        stroke="#30d158" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
+      <text x="${W - PR + 2}" y="${goalY + 4}" fill="#30d158" font-size="9">Goal</text>
+      <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+      ${dots}
+      ${xLabels}
+      ${yLabels}
+    </svg>`;
 }
 </script>
 </body>
