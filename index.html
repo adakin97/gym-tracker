@@ -699,9 +699,14 @@ function renderWorkoutSelector() {
   el.innerHTML = workoutBtns + restBtn;
 }
 
+function clearSwaps() {
+  Object.keys(swappedExercises).forEach(k => delete swappedExercises[k]);
+}
+
 function selectWorkout(dow) {
   selectedDow = parseInt(dow);
   workout = WORKOUTS[dow] || null;
+  clearSwaps();
   renderDateSelector();
   renderWorkoutSelector();
   renderToday();
@@ -712,6 +717,7 @@ function selectDate(dateStr, dow) {
   scheduledDow = dow;
   selectedDow  = WORKOUTS[dow] ? dow : 0;
   workout      = WORKOUTS[dow] || null;
+  clearSwaps();
   renderDateSelector();
   renderWorkoutSelector();
   renderToday();
