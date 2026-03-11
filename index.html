@@ -89,7 +89,7 @@ body {
   background: rgba(15,15,15,0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  padding: 52px 20px 16px;
+  padding: 52px 20px 6px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -100,9 +100,9 @@ body {
   justify-content: space-between;
   align-items: flex-start;
 }
-.header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-.header .date { font-size: 13px; color: var(--sub); margin-top: 2px; }
-.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.header .date { font-size: 12px; color: var(--sub); margin-top: 1px; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; position: relative; }
 .workout-badge {
   background: var(--accent);
   color: #fff;
@@ -112,7 +112,28 @@ body {
   border-radius: 20px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
 }
+
+/* ── Workout picker dropdown ── */
+.workout-picker {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 6px; z-index: 300;
+  min-width: 164px; display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.workout-picker.open { display: block; }
+.workout-picker-item {
+  padding: 8px 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.workout-picker-item:active { background: var(--card2); }
+.workout-picker-item.is-active { color: var(--accent); }
+.workout-picker-item .pick-tag { font-size: 10px; font-weight: 400; color: var(--green); }
+.workout-picker-divider { height: 1px; background: var(--border); margin: 4px 2px; }
 .signout-btn {
   background: none;
   border: 1px solid var(--border);
@@ -122,6 +143,30 @@ body {
   border-radius: 20px;
   cursor: pointer;
 }
+
+/* ── Day selector (compact) ── */
+.day-selector {
+  display: flex; gap: 6px;
+  padding: 6px 20px 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.day-selector::-webkit-scrollbar { display: none; }
+.day-pill {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 4px 9px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: none; color: var(--sub);
+  font-size: 11px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; line-height: 1.3;
+  transition: all 0.15s;
+}
+.day-pill small { font-size: 8px; font-weight: 400; letter-spacing: 0.4px; text-transform: uppercase; }
+.day-pill.is-today { border-color: var(--text); color: var(--text); }
+.day-pill.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* ── Nav ── */
 .nav {
@@ -239,29 +284,6 @@ body {
 }
 .prev-best .val { color: var(--green); font-weight: 700; }
 
-/* ── Day selector ── */
-.day-selector {
-  display: flex; gap: 8px;
-  padding: 10px 20px 12px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.day-selector::-webkit-scrollbar { display: none; }
-.day-pill {
-  flex-shrink: 0;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1.5px solid var(--border);
-  background: none; color: var(--sub);
-  font-size: 13px; font-weight: 600;
-  cursor: pointer; white-space: nowrap; line-height: 1.3;
-  transition: all 0.15s;
-}
-.day-pill small { font-size: 9px; font-weight: 400; letter-spacing: 0.5px; text-transform: uppercase; }
-.day-pill.is-today { border-color: var(--text); color: var(--text); }
-.day-pill.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* ── Set logger ── */
 .sets-header {
@@ -530,12 +552,12 @@ body {
         <div class="date" id="todayDate"></div>
       </div>
       <div class="header-right">
-        <div class="workout-badge" id="workoutBadge"></div>
+        <div class="workout-badge" id="workoutBadge" onclick="toggleWorkoutPicker()"></div>
         <button class="signout-btn" onclick="signOut()">Sign out</button>
+        <div class="workout-picker" id="workoutPicker"></div>
       </div>
     </div>
     <div class="day-selector" id="dateSelector"></div>
-    <div class="day-selector workout-selector" id="workoutSelector"></div>
   </div>
 
   <div class="view active" id="view-today">
@@ -726,21 +748,38 @@ function renderDateSelector() {
 }
 
 function renderWorkoutSelector() {
-  const el = document.getElementById('workoutSelector');
+  // Update badge text
+  const badge = document.getElementById('workoutBadge');
+  if (badge) badge.textContent = (workout?.name || 'Rest') + ' ▾';
+
+  // Fill picker dropdown
+  const el = document.getElementById('workoutPicker');
   if (!el) return;
-  const workoutBtns = Object.entries(WORKOUTS).map(([dow, w]) => {
+  const items = Object.entries(WORKOUTS).map(([dow, w]) => {
     const isScheduled = parseInt(dow) === scheduledDow;
-    return `<button class="day-pill workout-pill ${workout?.name === w.name ? 'selected' : ''} ${isScheduled ? 'scheduled-workout' : ''}"
-      onclick="selectWorkout(${dow})">
-      ${w.name}<small>${isScheduled ? '✓ Scheduled' : w.focus}</small>
-    </button>`;
+    const isActive    = workout?.name === w.name;
+    return `<div class="workout-picker-item ${isActive ? 'is-active' : ''}"
+      onclick="selectWorkout(${dow}); closeWorkoutPicker()">
+      ${w.name}
+      ${isScheduled ? '<span class="pick-tag">✓ Scheduled</span>' : ''}
+    </div>`;
   }).join('');
   const restIsScheduled = !WORKOUTS[scheduledDow];
-  const restBtn = `<button class="day-pill workout-pill ${workout === null ? 'selected' : ''} ${restIsScheduled ? 'scheduled-workout' : ''}"
-    onclick="selectWorkout(0)">
-    Rest<small>${restIsScheduled ? '✓ Scheduled' : 'Recovery'}</small>
-  </button>`;
-  el.innerHTML = workoutBtns + restBtn;
+  const restActive = workout === null;
+  el.innerHTML = items
+    + `<div class="workout-picker-divider"></div>`
+    + `<div class="workout-picker-item ${restActive ? 'is-active' : ''}"
+        onclick="selectWorkout(0); closeWorkoutPicker()">
+        Rest ${restIsScheduled ? '<span class="pick-tag">✓ Scheduled</span>' : ''}
+      </div>`;
+}
+
+function toggleWorkoutPicker() {
+  document.getElementById('workoutPicker').classList.toggle('open');
+}
+
+function closeWorkoutPicker() {
+  document.getElementById('workoutPicker')?.classList.remove('open');
 }
 
 function clearSwaps() {
@@ -998,7 +1037,6 @@ function renderToday() {
 
   if (!workout) {
     document.getElementById('workoutTitle').textContent = 'Rest Day';
-    document.getElementById('workoutBadge').style.display = 'none';
     document.getElementById('todayContent').innerHTML = `
       <div class="rest-screen">
         <div class="emoji">😴</div>
@@ -1009,7 +1047,6 @@ function renderToday() {
   }
 
   document.getElementById('workoutTitle').textContent = workout.name;
-  document.getElementById('workoutBadge').textContent = workout.focus;
 
   const totalSets = workout.exercises.reduce((s, e) => s + e.sets, 0);
   let html = `
@@ -1404,6 +1441,15 @@ function buildWeightChart() {
       ${yLabels}
     </svg>`;
 }
+
+// Close workout picker when tapping outside it
+document.addEventListener('click', e => {
+  const picker = document.getElementById('workoutPicker');
+  const badge  = document.getElementById('workoutBadge');
+  if (picker && !picker.contains(e.target) && e.target !== badge) {
+    picker.classList.remove('open');
+  }
+});
 </script>
 </body>
 </html>
