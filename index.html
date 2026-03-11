@@ -1382,6 +1382,7 @@ function addSet(exIdx, exerciseName) {
       onclick="logSetUI(${exIdx}, ${newSetIdx}, '${exerciseName}')">○</button>
     <button class="set-del-btn" onclick="removeSetUI('${exerciseName}', ${newSetIdx}, '${rowId}', ${exIdx})">×</button>`;
   if (addBtn) addBtn.parentNode.insertBefore(row, addBtn);
+  updateProgress(exIdx, exerciseName);
 }
 
 // ── Remove set ────────────────────────────────────────────────────────────────
@@ -1394,6 +1395,8 @@ async function removeSetUI(exerciseName, setIdx, rowId, exIdx) {
     await userLogs().doc(existing._id).delete();
     allLogs = allLogs.filter(l => l._id !== existing._id);
   }
+  // Decrement extra set count
+  if (extraSets[exIdx] > 0) extraSets[exIdx]--;
   // Remove row from DOM
   const row = document.getElementById(rowId);
   if (row) row.remove();
