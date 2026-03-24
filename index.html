@@ -830,11 +830,114 @@ const swappedExercises = {};
 let workoutStartTime   = null;
 
 // All exercises across all workouts — pool for the swap feature
+const EXERCISE_LIBRARY = [
+  { name: 'Barbell Bench Press - Medium Grip', muscle: 'Chest', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
+  { name: 'Decline Barbell Bench Press', muscle: 'Chest', imgId: 'Decline_Barbell_Bench_Press/0.jpg' },
+  { name: 'Dumbbell Bench Press', muscle: 'Chest', imgId: 'Dumbbell_Bench_Press/0.jpg' },
+  { name: 'Incline Dumbbell Press', muscle: 'Chest', imgId: 'Incline_Dumbbell_Press/0.jpg' },
+  { name: 'Dumbbell Flyes', muscle: 'Chest', imgId: 'Dumbbell_Flyes/0.jpg' },
+  { name: 'Decline Dumbbell Flyes', muscle: 'Chest', imgId: 'Decline_Dumbbell_Flyes/0.jpg' },
+  { name: 'Incline Dumbbell Flyes', muscle: 'Chest', imgId: 'Incline_Dumbbell_Flyes/0.jpg' },
+  { name: 'Cable Crossover', muscle: 'Chest', imgId: 'Cable_Crossover/0.jpg' },
+  { name: 'Butterfly', muscle: 'Chest', imgId: 'Butterfly/0.jpg' },
+  { name: 'Pushups', muscle: 'Chest', imgId: 'Pushups/0.jpg' },
+  { name: 'Bent Over Barbell Row', muscle: 'Back', imgId: 'Bent_Over_Barbell_Row/0.jpg' },
+  { name: 'Bent Over Two-Arm Long Bar Row', muscle: 'Back', imgId: 'Bent_Over_Two-Arm_Long_Bar_Row/0.jpg' },
+  { name: 'One-Arm Dumbbell Row', muscle: 'Back', imgId: 'One-Arm_Dumbbell_Row/0.jpg' },
+  { name: 'Seated Cable Rows', muscle: 'Back', imgId: 'Seated_Cable_Rows/0.jpg' },
+  { name: 'Close-Grip Front Lat Pulldown', muscle: 'Back', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+  { name: 'Wide-Grip Lat Pulldown', muscle: 'Back', imgId: 'Wide-Grip_Lat_Pulldown/0.jpg' },
+  { name: 'Pullups', muscle: 'Back', imgId: 'Pullups/0.jpg' },
+  { name: 'Chin-Up', muscle: 'Back', imgId: 'Chin-Up/0.jpg' },
+  { name: 'V-Bar Pulldown', muscle: 'Back', imgId: 'V-Bar_Pulldown/0.jpg' },
+  { name: 'Straight-Arm Pulldown', muscle: 'Back', imgId: 'Straight-Arm_Pulldown/0.jpg' },
+  { name: 'Face Pull', muscle: 'Back', imgId: 'Face_Pull/0.jpg' },
+  { name: 'Inverted Row', muscle: 'Back', imgId: 'Inverted_Row/0.jpg' },
+  { name: 'Barbell Shrug', muscle: 'Back', imgId: 'Barbell_Shrug/0.jpg' },
+  { name: 'Dumbbell Shrug', muscle: 'Back', imgId: 'Dumbbell_Shrug/0.jpg' },
+  { name: 'Barbell Shoulder Press', muscle: 'Shoulders', imgId: 'Barbell_Shoulder_Press/0.jpg' },
+  { name: 'Dumbbell Shoulder Press', muscle: 'Shoulders', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+  { name: 'Arnold Dumbbell Press', muscle: 'Shoulders', imgId: 'Arnold_Dumbbell_Press/0.jpg' },
+  { name: 'Side Lateral Raise', muscle: 'Shoulders', imgId: 'Side_Lateral_Raise/0.jpg' },
+  { name: 'Front Dumbbell Raise', muscle: 'Shoulders', imgId: 'Front_Dumbbell_Raise/0.jpg' },
+  { name: 'Reverse Flyes', muscle: 'Shoulders', imgId: 'Reverse_Flyes/0.jpg' },
+  { name: 'Upright Barbell Row', muscle: 'Shoulders', imgId: 'Upright_Barbell_Row/0.jpg' },
+  { name: 'Barbell Rear Delt Row', muscle: 'Shoulders', imgId: 'Barbell_Rear_Delt_Row/0.jpg' },
+  { name: 'Barbell Curl', muscle: 'Biceps', imgId: 'Barbell_Curl/0.jpg' },
+  { name: 'Dumbbell Bicep Curl', muscle: 'Biceps', imgId: 'Dumbbell_Bicep_Curl/0.jpg' },
+  { name: 'Alternate Hammer Curl', muscle: 'Biceps', imgId: 'Alternate_Hammer_Curl/0.jpg' },
+  { name: 'Preacher Curl', muscle: 'Biceps', imgId: 'Preacher_Curl/0.jpg' },
+  { name: 'Concentration Curls', muscle: 'Biceps', imgId: 'Concentration_Curls/0.jpg' },
+  { name: 'EZ-Bar Curl', muscle: 'Biceps', imgId: 'EZ-Bar_Curl/0.jpg' },
+  { name: 'Incline Dumbbell Curl', muscle: 'Biceps', imgId: 'Incline_Dumbbell_Curl/0.jpg' },
+  { name: 'Spider Curl', muscle: 'Biceps', imgId: 'Spider_Curl/0.jpg' },
+  { name: 'Overhead Cable Curl', muscle: 'Biceps', imgId: 'Overhead_Cable_Curl/0.jpg' },
+  { name: 'Close-Grip EZ Bar Curl', muscle: 'Biceps', imgId: 'Close-Grip_EZ_Bar_Curl/0.jpg' },
+  { name: 'Triceps Pushdown', muscle: 'Triceps', imgId: 'Triceps_Pushdown/0.jpg' },
+  { name: 'Reverse Grip Triceps Pushdown', muscle: 'Triceps', imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
+  { name: 'Dips - Triceps Version', muscle: 'Triceps', imgId: 'Dips_-_Triceps_Version/0.jpg' },
+  { name: 'Lying Triceps Press', muscle: 'Triceps', imgId: 'Lying_Triceps_Press/0.jpg' },
+  { name: 'Cable One Arm Tricep Extension', muscle: 'Triceps', imgId: 'Cable_One_Arm_Tricep_Extension/0.jpg' },
+  { name: 'Tricep Dumbbell Kickback', muscle: 'Triceps', imgId: 'Tricep_Dumbbell_Kickback/0.jpg' },
+  { name: 'Close-Grip Barbell Bench Press', muscle: 'Triceps', imgId: 'Close-Grip_Barbell_Bench_Press/0.jpg' },
+  { name: 'Bench Dips', muscle: 'Triceps', imgId: 'Bench_Dips/0.jpg' },
+  { name: 'Barbell Squat', muscle: 'Quads', imgId: 'Barbell_Squat/0.jpg' },
+  { name: 'Barbell Full Squat', muscle: 'Quads', imgId: 'Barbell_Full_Squat/0.jpg' },
+  { name: 'Front Barbell Squat', muscle: 'Quads', imgId: 'Front_Barbell_Squat/0.jpg' },
+  { name: 'Leg Press', muscle: 'Quads', imgId: 'Leg_Press/0.jpg' },
+  { name: 'Leg Extensions', muscle: 'Quads', imgId: 'Leg_Extensions/0.jpg' },
+  { name: 'Hack Squat', muscle: 'Quads', imgId: 'Hack_Squat/0.jpg' },
+  { name: 'Goblet Squat', muscle: 'Quads', imgId: 'Goblet_Squat/0.jpg' },
+  { name: 'Dumbbell Squat', muscle: 'Quads', imgId: 'Dumbbell_Squat/0.jpg' },
+  { name: 'Barbell Lunge', muscle: 'Quads', imgId: 'Barbell_Lunge/0.jpg' },
+  { name: 'Barbell Walking Lunge', muscle: 'Quads', imgId: 'Barbell_Walking_Lunge/0.jpg' },
+  { name: 'Barbell Step Ups', muscle: 'Quads', imgId: 'Barbell_Step_Ups/0.jpg' },
+  { name: 'Romanian Deadlift', muscle: 'Hamstrings', imgId: 'Romanian_Deadlift/0.jpg' },
+  { name: 'Stiff-Legged Barbell Deadlift', muscle: 'Hamstrings', imgId: 'Stiff-Legged_Barbell_Deadlift/0.jpg' },
+  { name: 'Lying Leg Curls', muscle: 'Hamstrings', imgId: 'Lying_Leg_Curls/0.jpg' },
+  { name: 'Seated Leg Curl', muscle: 'Hamstrings', imgId: 'Seated_Leg_Curl/0.jpg' },
+  { name: 'Standing Leg Curl', muscle: 'Hamstrings', imgId: 'Standing_Leg_Curl/0.jpg' },
+  { name: 'Good Morning', muscle: 'Hamstrings', imgId: 'Good_Morning/0.jpg' },
+  { name: 'Glute Ham Raise', muscle: 'Hamstrings', imgId: 'Glute_Ham_Raise/0.jpg' },
+  { name: 'Leverage Deadlift', muscle: 'Hamstrings', imgId: 'Leverage_Deadlift/0.jpg' },
+  { name: 'Barbell Deadlift', muscle: 'Hamstrings', imgId: 'Barbell_Deadlift/0.jpg' },
+  { name: 'Sumo Deadlift', muscle: 'Hamstrings', imgId: 'Sumo_Deadlift/0.jpg' },
+  { name: 'Barbell Glute Bridge', muscle: 'Glutes', imgId: 'Barbell_Glute_Bridge/0.jpg' },
+  { name: 'Barbell Hip Thrust', muscle: 'Glutes', imgId: 'Barbell_Hip_Thrust/0.jpg' },
+  { name: 'Split Squat with Dumbbells', muscle: 'Glutes', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+  { name: 'Glute Kickback', muscle: 'Glutes', imgId: 'Glute_Kickback/0.jpg' },
+  { name: 'Standing Calf Raises', muscle: 'Calves', imgId: 'Standing_Calf_Raises/0.jpg' },
+  { name: 'Barbell Seated Calf Raise', muscle: 'Calves', imgId: 'Barbell_Seated_Calf_Raise/0.jpg' },
+  { name: 'Calf Press On The Leg Press Machine', muscle: 'Calves', imgId: 'Calf_Press_On_The_Leg_Press_Machine/0.jpg' },
+  { name: 'Donkey Calf Raises', muscle: 'Calves', imgId: 'Donkey_Calf_Raises/0.jpg' },
+  { name: 'Calf Press', muscle: 'Calves', imgId: 'Calf_Press/0.jpg' },
+  { name: 'Plank', muscle: 'Core', imgId: 'Plank/1.jpg' },
+  { name: 'Hanging Leg Raise', muscle: 'Core', imgId: 'Hanging_Leg_Raise/0.jpg' },
+  { name: 'Ab Crunch Machine', muscle: 'Core', imgId: 'Ab_Crunch_Machine/0.jpg' },
+  { name: 'Ab Roller', muscle: 'Core', imgId: 'Ab_Roller/0.jpg' },
+  { name: 'Cable Crunch', muscle: 'Core', imgId: 'Cable_Crunch/0.jpg' },
+  { name: 'Decline Crunch', muscle: 'Core', imgId: 'Decline_Crunch/0.jpg' },
+  { name: 'Dead Bug', muscle: 'Core', imgId: 'Dead_Bug/0.jpg' },
+  { name: 'Cross-Body Crunch', muscle: 'Core', imgId: 'Cross-Body_Crunch/0.jpg' },
+  { name: 'Flat Bench Lying Leg Raise', muscle: 'Core', imgId: 'Flat_Bench_Lying_Leg_Raise/0.jpg' },
+  { name: 'Exercise Ball Crunch', muscle: 'Core', imgId: 'Exercise_Ball_Crunch/0.jpg' },
+  { name: 'Dumbbell Side Bend', muscle: 'Core', imgId: 'Dumbbell_Side_Bend/0.jpg' },
+  { name: 'Bottoms Up', muscle: 'Core', imgId: 'Bottoms_Up/0.jpg' },
+  { name: 'Clean and Jerk', muscle: 'Full Body', imgId: 'Clean_and_Jerk/0.jpg' },
+  { name: 'Power Clean', muscle: 'Full Body', imgId: 'Power_Clean/0.jpg' },
+];
+
+// Merge workout exercises + library, deduping by name
 const ALL_EXERCISES = (() => {
   const seen = new Set(), out = [];
+  // First add all workout exercises
   Object.values(WORKOUTS).forEach(w => w.exercises.forEach(ex => {
     if (!seen.has(ex.name)) { seen.add(ex.name); out.push({ ...ex }); }
   }));
+  // Then add library exercises
+  EXERCISE_LIBRARY.forEach(ex => {
+    if (!seen.has(ex.name)) { seen.add(ex.name); out.push({ ...ex }); }
+  });
   return out;
 })();
 
@@ -1536,9 +1639,16 @@ function closeSwap(e) {
 function filterSwap(query) {
   const q        = query.toLowerCase().trim();
   const origName = workout?.exercises[_swapExIdx]?.name;
-  const list     = q
+  const currentMuscle = workout?.exercises[_swapExIdx]?.muscle?.toLowerCase() || '';
+  const filtered = q
     ? ALL_EXERCISES.filter(ex => ex.name.toLowerCase().includes(q) || ex.muscle.toLowerCase().includes(q))
     : ALL_EXERCISES;
+  const list = [...filtered].sort((a, b) => {
+    const aMatch = a.muscle.toLowerCase() === currentMuscle ? 0 : 1;
+    const bMatch = b.muscle.toLowerCase() === currentMuscle ? 0 : 1;
+    if (aMatch !== bMatch) return aMatch - bMatch;
+    return a.name.localeCompare(b.name);
+  });
   document.getElementById('swapList').innerHTML = list.map(ex => {
     const isDefault = ex.name === origName;
     return `
