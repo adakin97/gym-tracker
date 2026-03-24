@@ -1265,6 +1265,9 @@ function renderToday() {
     const totalSetsEx = Math.max(1, ex.sets + (extraSets[exIdx] || 0));
     const progressPct = Math.round((todayLogged.length / totalSetsEx) * 100);
 
+    const noWeight = ['Plank', 'Hanging Leg Raises', 'Dead Bug'].includes(ex.name);
+    const repsLabel = ex.name === 'Plank' ? 'mins' : 'reps';
+
     let setRowsHtml = '';
     for (let s = 0; s < ex.sets; s++) {
       const logged = todayLogged.find(l => l.setIdx === s);
@@ -1272,10 +1275,12 @@ function renderToday() {
       setRowsHtml += `
         <div class="set-row" id="setrow-${exIdx}-${s}">
           <div class="set-num">S${s+1}</div>
-          <input class="set-input" type="number" inputmode="decimal" placeholder="kg"
-            id="w-${exIdx}-${s}" value="${logged ? logged.weight : ''}">
-          <input class="set-input" type="number" inputmode="numeric" placeholder="reps"
-            id="r-${exIdx}-${s}" value="${logged ? logged.reps : ''}">
+          ${noWeight
+            ? `<input type="hidden" id="w-${exIdx}-${s}" value="0">`
+            : `<input class="set-input" type="number" inputmode="decimal" placeholder="kg"
+                id="w-${exIdx}-${s}" value="${logged ? logged.weight : ''}">`}
+          <input class="set-input" type="number" inputmode="${ex.name === 'Plank' ? 'decimal' : 'numeric'}" placeholder="${repsLabel}"
+            id="r-${exIdx}-${s}" value="${logged ? logged.reps : ''}" ${noWeight ? 'style="flex:2"' : ''}>
           <button class="set-done-btn ${isDone ? 'logged' : ''}" id="btn-${exIdx}-${s}"
             onclick="logSetUI(${exIdx}, ${s}, '${ex.name}')">
             ${isDone ? '✓' : '○'}
@@ -1304,11 +1309,13 @@ function renderToday() {
             <div class="meta-chip">Tempo <span>${ex.tempo}</span></div>
             <div class="meta-chip">Rest <span>${ex.rest}</span></div>
           </div>
-          ${prev
-            ? `<div class="prev-best"><span>Previous best:</span><span class="val">${prev.weight} kg</span><span>on ${new Date(prev.date + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span><span class="overload-nudge">→ try ${(prev.weight + 2.5).toFixed(1)} kg</span></div>`
-            : `<div class="prev-best" style="color:var(--sub)">No previous logs — first time! 🔥</div>`}
+          ${noWeight
+            ? ''
+            : (prev
+              ? `<div class="prev-best"><span>Previous best:</span><span class="val">${prev.weight} kg</span><span>on ${new Date(prev.date + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${ex.name === 'Pull-ups' ? `<span class="overload-nudge">→ try ${(prev.weight - 2.5).toFixed(1)} kg</span>` : `<span class="overload-nudge">→ try ${(prev.weight + 2.5).toFixed(1)} kg</span>`}</div>`
+              : `<div class="prev-best" style="color:var(--sub)">No previous logs — first time! 🔥</div>`)}
           <div class="sets-header">
-            <span>Set</span><span>Weight</span><span>Reps</span><span></span><span></span>
+            <span>Set</span>${noWeight ? '' : '<span>Weight</span>'}<span>${repsLabel.charAt(0).toUpperCase() + repsLabel.slice(1)}</span><span></span><span></span>
           </div>
           ${setRowsHtml}
           <button class="add-set-btn" onclick="addSet(${exIdx}, '${ex.name}')">+ Add Set</button>
