@@ -1231,12 +1231,36 @@ function selectWorkout(dow) {
 function selectDate(dateStr, dow) {
   selectedDate = dateStr;
   scheduledDow = dow;
-  workout = getWorkoutForDate(dateStr);
+  clearSwaps();
+
+  if (dateStr < todayStr) {
+    // Past date: derive workout and swaps from what was actually logged
+    const dateLogs = allLogs.filter(l => l.date === dateStr);
+    const loggedWorkoutName = dateLogs[0]?.workout || null;
+    workout = loggedWorkoutName
+      ? Object.values(WORKOUTS).find(w => w.name === loggedWorkoutName) || null
+      : null;
+    // Restore exercise swaps: any log entry whose exercise name differs from the
+    // template exercise at that index was a swap (requires exIdx stored in the log)
+    if (workout) {
+      dateLogs.forEach(l => {
+        if (l.exIdx != null) {
+          const templateEx = workout.exercises[l.exIdx];
+          if (templateEx && l.exercise !== templateEx.name && !swappedExercises[l.exIdx]) {
+            const swapEx = ALL_EXERCISES.find(e => e.name === l.exercise);
+            if (swapEx) swappedExercises[l.exIdx] = { name: swapEx.name, imgId: swapEx.imgId, muscle: swapEx.muscle };
+          }
+        }
+      });
+    }
+  } else {
+    workout = getWorkoutForDate(dateStr);
+  }
+
   scheduledWorkoutName = workout?.name || null;
   selectedDow = workout
     ? parseInt(Object.entries(WORKOUTS).find(([, w]) => w.name === workout.name)?.[0] || 0)
     : 0;
-  clearSwaps();
   renderDateSelector();
   renderWorkoutSelector();
   renderToday();
@@ -1365,7 +1389,7 @@ async function logWeightUI() {
   renderWeight();
 }
 
-async function logSet(exercise, setIdx, weight, reps) {
+async function logSet(exIdx, exercise, setIdx, weight, reps) {
   // Remove existing entry for this exercise+set+today
   const existing = allLogs.find(l =>
     l.date === selectedDate && l.exercise === exercise && l.setIdx === setIdx
@@ -1374,11 +1398,12 @@ async function logSet(exercise, setIdx, weight, reps) {
     await userLogs().doc(existing._id).delete();
     allLogs = allLogs.filter(l => l._id !== existing._id);
   }
-  // Add new entry
+  // Add new entry — exIdx stored so swaps can be reconstructed on past-date views
   const entry = {
     date: selectedDate,
     workout: workout?.name || '',
     exercise,
+    exIdx,
     setIdx,
     weight: parseFloat(weight) || 0,
     reps: parseInt(reps) || 0,
@@ -1590,7 +1615,7 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
   }
 
   btn.textContent = '…';
-  await logSet(exerciseName, setIdx, weight || 0, reps || 0);
+  await logSet(exIdx, exerciseName, setIdx, weight || 0, reps || 0);
 
   btn.classList.add('logged');
   btn.textContent = '✓';
