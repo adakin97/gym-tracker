@@ -1776,13 +1776,12 @@ function renderReplanRows(mondayStr, plan) {
     d.setDate(monDate.getDate() + i);
     const ds = d.toISOString().split('T')[0];
     const dow = dowOrder[i];
-    const isPast = ds < todayStr;
     const wkName = plan[dow] || '';
     const optsWithSelected = opts.replace(
       `value="${wkName}"`,
       `value="${wkName}" selected`
     );
-    html += `<div class="replan-row${isPast ? ' past' : ''}">
+    html += `<div class="replan-row">
       <span class="replan-day">${dayNames[i]}</span>
       <span class="replan-date">${d.getDate()}</span>
       <select class="replan-select${wkName ? ' has-workout' : ''}"
