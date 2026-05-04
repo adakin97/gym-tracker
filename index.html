@@ -210,7 +210,7 @@ body {
 .view { display: none; padding: 16px; }
 .view.active { display: block; }
 
-/* ── Rest day ── */
+/* ── Rest day / cardio ── */
 .rest-screen {
   text-align: center;
   padding: 60px 20px;
@@ -218,6 +218,16 @@ body {
 .rest-screen .emoji { font-size: 64px; margin-bottom: 16px; }
 .rest-screen h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
 .rest-screen p { color: var(--sub); font-size: 16px; line-height: 1.5; }
+.cardio-del-btn {
+  margin-top: 16px;
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid var(--sub);
+  border-radius: 20px;
+  color: var(--sub);
+  font-size: 14px;
+  cursor: pointer;
+}
 
 /* ── Summary bar ── */
 .summary-bar {
@@ -830,47 +840,41 @@ const WORKOUTS = {
   1: {
     name: 'Upper A', focus: 'Strength',
     exercises: [
-      { name: 'Barbell Bench Press',  muscle: 'Chest',     sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '30 sec', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
-      { name: 'T-Bar Rows',            muscle: 'Back',      sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '30 sec', imgId: 'Bent_Over_Barbell_Row/0.jpg' },
-      { name: 'Dumbbell Shoulder Press', muscle: 'Shoulders', sets: 3, reps: '6-8', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
-      { name: 'Pull-ups',             muscle: 'Back',      sets: 3, reps: '6-8',   tempo: '3-0-1-0', rest: '30 sec', imgId: 'Pullups/0.jpg' },
-      { name: 'Dumbbell Curl',        muscle: 'Biceps',    sets: 3, reps: '8-10',  tempo: '3-0-1-0', rest: '30 sec', imgId: 'Dumbbell_Bicep_Curl/0.jpg' },
-      { name: 'Cable Tricep Pushdowns', muscle: 'Triceps',  sets: 3, reps: '8-10',  tempo: '3-0-1-0', rest: '30 sec', imgId: 'Triceps_Pushdown/0.jpg' },
+      { name: 'Barbell Bench Press',    muscle: 'Chest',      sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
+      { name: 'T-Bar Rows',             muscle: 'Back',       sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Bent_Over_Barbell_Row/0.jpg' },
+      { name: 'Dumbbell Shoulder Press',muscle: 'Shoulders',  sets: 3, reps: '6-8',   tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+      { name: 'Pull-ups',               muscle: 'Back',       sets: 3, reps: '6-8',   tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Pullups/0.jpg' },
+      { name: 'Dumbbell Curl',          muscle: 'Biceps',     sets: 3, reps: '8-10',  tempo: '3-0-1-0', rest: '60 sec',  imgId: 'Dumbbell_Bicep_Curl/0.jpg' },
     ]
   },
   2: {
     name: 'Lower A', focus: 'Strength',
     exercises: [
-      { name: 'Barbell Squat',        muscle: 'Quads',      sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '30 sec', imgId: 'Barbell_Squat/0.jpg' },
-      { name: 'Machine Deadlift',      muscle: 'Hamstrings', sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '30 sec', imgId: 'Leverage_Deadlift/0.jpg' },
-      { name: 'Leg Press',            muscle: 'Quads',      sets: 3, reps: '8-10',  tempo: '3-0-1-0', rest: '30 sec', imgId: 'Leg_Press/0.jpg' },
-      { name: 'Static Lunges',        muscle: 'Glutes',     sets: 3, reps: '10-12', tempo: '2-0-1-0', rest: '30 sec', imgId: 'Barbell_Walking_Lunge/0.jpg' },
-      { name: 'Calf Raises',          muscle: 'Calves',     sets: 4, reps: '12-15', tempo: '2-1-1-1', rest: '30 sec', imgId: 'Standing_Calf_Raises/0.jpg' },
-      { name: 'Plank',                muscle: 'Core',       sets: 3, reps: '45s',   tempo: '-',       rest: '30 sec', imgId: 'Plank/1.jpg' },
+      { name: 'Barbell Squat',          muscle: 'Quads',      sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Barbell_Squat/0.jpg' },
+      { name: 'Machine Deadlift',       muscle: 'Hamstrings', sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Leverage_Deadlift/0.jpg' },
+      { name: 'Static Lunges',          muscle: 'Glutes',     sets: 3, reps: '10-12', tempo: '2-0-1-0', rest: '60 sec',  imgId: 'Barbell_Walking_Lunge/0.jpg' },
+      { name: 'Calf Raises',            muscle: 'Calves',     sets: 4, reps: '12-15', tempo: '2-1-1-1', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
+      { name: 'Plank',                  muscle: 'Core',       sets: 3, reps: '45s',   tempo: '-',       rest: '45 sec',  imgId: 'Plank/1.jpg' },
     ]
   },
   4: {
     name: 'Upper B', focus: 'Hypertrophy',
     exercises: [
-      { name: 'Incline Dumbbell Press',  muscle: 'Chest',     sets: 4, reps: '10-12', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Incline_Dumbbell_Press/0.jpg' },
-      { name: 'Lat Pulldown',            muscle: 'Back',      sets: 4, reps: '10-12', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
-      { name: 'Dumbbell Shoulder Press', muscle: 'Shoulders', sets: 3, reps: '10-12', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
-      { name: 'Dumbbell Flyes',          muscle: 'Chest',     sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Decline_Dumbbell_Flyes/0.jpg' },
-      { name: 'Face Pulls',              muscle: 'Rear Delt', sets: 3, reps: '15-20', tempo: '2-1-1-0', rest: '30 sec', imgId: 'Face_Pull/0.jpg' },
-      { name: 'Hammer Curls',            muscle: 'Biceps',    sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Alternate_Hammer_Curl/0.jpg' },
-      { name: 'Cable Tricep Pushdowns',  muscle: 'Triceps',   sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
+      { name: 'Incline Dumbbell Press', muscle: 'Chest',      sets: 4, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Incline_Dumbbell_Press/0.jpg' },
+      { name: 'Lat Pulldown',           muscle: 'Back',       sets: 4, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+      { name: 'Dumbbell Shoulder Press',muscle: 'Shoulders',  sets: 3, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+      { name: 'Face Pulls',             muscle: 'Rear Delt',  sets: 3, reps: '15-20', tempo: '2-1-1-0', rest: '60 sec',  imgId: 'Face_Pull/0.jpg' },
+      { name: 'Cable Tricep Pushdowns', muscle: 'Triceps',    sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '60 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
     ]
   },
   6: {
     name: 'Lower B', focus: 'Hypertrophy',
     exercises: [
-      { name: 'Deadlift',               muscle: 'Full Body',  sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '30 sec', imgId: 'Barbell_Deadlift/0.jpg' },
-      { name: 'Bulgarian Split Squats', muscle: 'Glutes',     sets: 3, reps: '10-12', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
-      { name: 'Leg Curls',              muscle: 'Hamstrings', sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '30 sec', imgId: 'Lying_Leg_Curls/0.jpg' },
-      { name: 'Leg Press',              muscle: 'Quads',      sets: 3, reps: '15-20', tempo: '2-0-1-0', rest: '30 sec', imgId: 'Leg_Press/0.jpg' },
-      { name: 'Calf Raises',            muscle: 'Calves',     sets: 4, reps: '15-20', tempo: '2-1-1-1', rest: '30 sec', imgId: 'Standing_Calf_Raises/0.jpg' },
-      { name: 'Hanging Leg Raises',     muscle: 'Core',       sets: 3, reps: '12-15', tempo: '2-0-1-0', rest: '30 sec', imgId: 'Hanging_Leg_Raise/0.jpg' },
-      { name: 'Dead Bug',               muscle: 'Core',       sets: 3, reps: '12-15', tempo: '2-1-1-0', rest: '30 sec', imgId: 'Dead_Bug/0.jpg' },
+      { name: 'Deadlift',               muscle: 'Full Body',  sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Barbell_Deadlift/0.jpg' },
+      { name: 'Bulgarian Split Squats', muscle: 'Glutes',     sets: 3, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+      { name: 'Leg Curls',              muscle: 'Hamstrings', sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '60 sec',  imgId: 'Lying_Leg_Curls/0.jpg' },
+      { name: 'Leg Press',              muscle: 'Quads',      sets: 3, reps: '15-20', tempo: '2-0-1-0', rest: '90 sec',  imgId: 'Leg_Press/0.jpg' },
+      { name: 'Calf Raises',            muscle: 'Calves',     sets: 4, reps: '15-20', tempo: '2-1-1-1', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
     ]
   }
 };
@@ -894,6 +898,7 @@ let currentUser = null;
 let allLogs     = [];
 let allWeights  = [];
 let weekPlans   = {};   // mondayStr -> { dow: workoutName|null, ... }
+let allCardio   = [];   // { date, type ('Swim'|'Run'), duration (mins) }
 const extraSets = {};
 let selectedDate          = todayStr;
 let scheduledDow          = todayDow;
@@ -1024,15 +1029,17 @@ function getMondayStr(dateStr) {
 }
 
 const DEFAULT_PLAN = { 0: null, 1: 'Upper A', 2: 'Lower A', 3: null, 4: 'Upper B', 5: null, 6: 'Lower B' };
-const WORKOUT_NAMES = ['Upper A', 'Lower A', 'Upper B', 'Lower B'];
+const WORKOUT_NAMES = ['Upper A', 'Lower A', 'Upper B', 'Lower B', 'Swim', 'Run'];
+const CARDIO_TYPES  = ['Swim', 'Run'];
 
 function getWeekPlan(mondayStr) {
   if (!weekPlans[mondayStr]) return { ...DEFAULT_PLAN };
-  // Merge: stored plan overrides defaults (stored null values are explicit rest overrides)
   const stored = weekPlans[mondayStr];
   const merged = { ...DEFAULT_PLAN };
   for (let i = 0; i <= 6; i++) {
-    if (String(i) in stored || i in stored) merged[i] = stored[i] || stored[String(i)] || null;
+    const key = String(i);
+    if (key in stored) merged[i] = stored[key] ?? null;
+    else if (i in stored) merged[i] = stored[i] ?? null;
   }
   return merged;
 }
@@ -1044,6 +1051,7 @@ function getWorkoutForDate(dateStr) {
   const plan = getWeekPlan(mondayStr);
   const wkName = plan[dow];
   if (!wkName) return null;
+  if (CARDIO_TYPES.includes(wkName)) return { name: wkName, cardio: true };
   return Object.values(WORKOUTS).find(w => w.name === wkName) || null;
 }
 
@@ -1061,9 +1069,20 @@ function renderDateSelector() {
     const dow      = d.getDay();
     const isToday  = ds === todayStr;
     const isFuture = ds > todayStr;
-    const wo       = getWorkoutForDate(ds);
     const label    = isToday ? 'Today' : d.toLocaleDateString('en-GB', { weekday: 'short' });
     const hasLogs  = !isFuture && allLogs.some(l => l.date === ds);
+    // For past dates prefer what was actually logged over the scheduled plan
+    let wo;
+    if (!isFuture && !isToday) {
+      const loggedName = allLogs.find(l => l.date === ds)?.workout || null;
+      const cardioEntry = allCardio.find(c => c.date === ds);
+      wo = loggedName
+        ? (Object.values(WORKOUTS).find(w => w.name === loggedName) || { name: loggedName })
+        : cardioEntry ? { name: cardioEntry.type, cardio: true }
+        : getWorkoutForDate(ds);
+    } else {
+      wo = getWorkoutForDate(ds);
+    }
     // Future: workout days dimmed but visible; rest days very faint
     const opacity  = isFuture ? (wo ? '0.5' : '0.25') : '1';
     const noTap    = isFuture ? 'pointer-events:none' : '';
@@ -1078,14 +1097,12 @@ function renderDateSelector() {
 }
 
 function renderWorkoutSelector() {
-  // Update badge text
   const badge = document.getElementById('workoutBadge');
   if (badge) badge.textContent = (workout?.name || 'Rest') + ' ▾';
 
-  // Fill picker dropdown
   const el = document.getElementById('workoutPicker');
   if (!el) return;
-  const items = Object.entries(WORKOUTS).map(([dow, w]) => {
+  const gymItems = Object.entries(WORKOUTS).map(([dow, w]) => {
     const isScheduled = w.name === scheduledWorkoutName;
     const isActive    = workout?.name === w.name;
     return `<div class="workout-picker-item ${isActive ? 'is-active' : ''}"
@@ -1094,12 +1111,23 @@ function renderWorkoutSelector() {
       ${isScheduled ? '<span class="pick-tag">✓ Scheduled</span>' : ''}
     </div>`;
   }).join('');
+  const cardioItems = CARDIO_TYPES.map(type => {
+    const isScheduled = type === scheduledWorkoutName;
+    const isActive    = workout?.name === type;
+    return `<div class="workout-picker-item ${isActive ? 'is-active' : ''}"
+      onclick="selectCardio('${type}'); closeWorkoutPicker()">
+      ${type}
+      ${isScheduled ? '<span class="pick-tag">✓ Scheduled</span>' : ''}
+    </div>`;
+  }).join('');
   const restIsScheduled = !scheduledWorkoutName;
   const restActive = workout === null;
-  el.innerHTML = items
+  el.innerHTML = gymItems
+    + `<div class="workout-picker-divider"></div>`
+    + cardioItems
     + `<div class="workout-picker-divider"></div>`
     + `<div class="workout-picker-item ${restActive ? 'is-active' : ''}"
-        onclick="selectWorkout(0); closeWorkoutPicker()">
+        onclick="selectCardio(null); closeWorkoutPicker()">
         Rest ${restIsScheduled ? '<span class="pick-tag">✓ Scheduled</span>' : ''}
       </div>`;
 }
@@ -1223,15 +1251,39 @@ function showRocketAnimation() {
   setTimeout(() => overlay.classList.remove('show'), 4800);
 }
 
-function selectWorkout(dow) {
+async function selectWorkout(dow) {
   selectedDow = parseInt(dow);
   workout = WORKOUTS[dow] || null;
   summaryOpen = true;
   clearSwaps();
+  // Persist the user's choice to the week plan for this date
+  const mondayStr = getMondayStr(selectedDate);
+  const plan = getWeekPlan(mondayStr);
+  const d = new Date(selectedDate + 'T12:00:00');
+  plan[d.getDay()] = workout ? workout.name : null;
+  scheduledWorkoutName = workout?.name || null;
+  await saveWeekPlan(mondayStr, plan);
   renderDateSelector();
   renderWorkoutSelector();
   renderToday();
 }
+
+async function selectCardio(type) {
+  workout = type ? { name: type, cardio: true } : null;
+  selectedDow = 0;
+  summaryOpen = false;
+  clearSwaps();
+  const mondayStr = getMondayStr(selectedDate);
+  const plan = getWeekPlan(mondayStr);
+  const d = new Date(selectedDate + 'T12:00:00');
+  plan[d.getDay()] = type || null;
+  scheduledWorkoutName = type || null;
+  await saveWeekPlan(mondayStr, plan);
+  renderDateSelector();
+  renderWorkoutSelector();
+  renderToday();
+}
+window.selectCardio = selectCardio;
 
 function selectDate(dateStr, dow) {
   selectedDate = dateStr;
@@ -1278,6 +1330,7 @@ auth.onAuthStateChanged(async user => {
     await loadLogs();
     await loadWeights();
     await loadWeekPlans();
+    await loadCardio();
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('signin-screen').style.display  = 'none';
     document.getElementById('app').style.display = 'block';
@@ -1327,6 +1380,45 @@ async function loadLogs() {
 }
 
 function getLogs() { return allLogs; }
+
+// ── Cardio Firestore helpers ──────────────────────────────────────────────────
+function userCardio() {
+  return db.collection('users').doc(currentUser.uid).collection('cardio');
+}
+
+async function loadCardio() {
+  const snap = await userCardio().get();
+  allCardio = snap.docs.map(d => d.data());
+}
+
+async function saveCardio(entry) {
+  allCardio = allCardio.filter(c => c.date !== entry.date);
+  allCardio.push(entry);
+  await userCardio().doc(entry.date).set(entry);
+}
+
+async function deleteCardioEntry(date) {
+  allCardio = allCardio.filter(c => c.date !== date);
+  await userCardio().doc(date).delete();
+  renderToday();
+  showSyncToast();
+}
+window.deleteCardioEntry = deleteCardioEntry;
+
+async function logCardioUI() {
+  const input = document.getElementById('cardioDurationInput');
+  const val = parseInt(input?.value);
+  if (!val || val < 1 || val > 600) return;
+  const typeEl = document.getElementById('cardioType');
+  const type = typeEl?.textContent || workout?.name || 'Swim';
+  const btn = document.getElementById('cardioLogBtn');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  await saveCardio({ date: selectedDate, type, duration: val });
+  showSyncToast();
+  renderToday();
+  renderDateSelector();
+}
+window.logCardioUI = logCardioUI;
 
 // ── Week plan Firestore helpers ───────────────────────────────────────────────
 function userWeekPlans() {
@@ -1471,6 +1563,31 @@ function renderToday() {
         <h2>Recovery Day</h2>
         <p>Rest is where the gains happen.<br>Eat well, sleep well, come back stronger.</p>
       </div>`;
+    return;
+  }
+
+  // Cardio session view
+  if (workout.cardio) {
+    document.getElementById('workoutTitle').textContent = workout.name;
+    const logged = allCardio.find(c => c.date === selectedDate);
+    const icon = workout.name === 'Swim' ? '🏊' : '🏃';
+    document.getElementById('todayContent').innerHTML = logged
+      ? `<div class="rest-screen">
+           <div class="emoji">${icon}</div>
+           <h2>${workout.name} logged</h2>
+           <p style="font-size:1.4rem;font-weight:700;margin:8px 0">${logged.duration} min</p>
+           <button class="cardio-del-btn" onclick="deleteCardioEntry('${selectedDate}')">Delete entry</button>
+         </div>`
+      : `<div class="rest-screen">
+           <div class="emoji">${icon}</div>
+           <h2 id="cardioType">${workout.name}</h2>
+           <p>Log your session duration below.</p>
+           <div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:16px">
+             <input id="cardioDurationInput" class="set-input" type="number" inputmode="numeric"
+               placeholder="mins" style="width:80px;font-size:1.1rem;text-align:center">
+             <button id="cardioLogBtn" class="replan-save-btn" onclick="logCardioUI()">Log session</button>
+           </div>
+         </div>`;
     return;
   }
 
@@ -1692,7 +1809,7 @@ function renderHistory() {
   const logs      = getLogs();
   const container = document.getElementById('historyContent');
 
-  if (!logs.length) {
+  if (!logs.length && !allCardio.length) {
     container.innerHTML = `
       <div class="history-empty">
         <div class="emoji">📋</div>
@@ -1703,39 +1820,42 @@ function renderHistory() {
 
   const byDate = {};
   logs.forEach(l => {
-    if (!byDate[l.date]) byDate[l.date] = {};
-    if (!byDate[l.date][l.exercise]) byDate[l.date][l.exercise] = [];
-    byDate[l.date][l.exercise].push(l);
+    if (!byDate[l.date]) byDate[l.date] = { gym: {}, cardio: null };
+    if (!byDate[l.date].gym[l.exercise]) byDate[l.date].gym[l.exercise] = [];
+    byDate[l.date].gym[l.exercise].push(l);
+  });
+  allCardio.forEach(c => {
+    if (!byDate[c.date]) byDate[c.date] = { gym: {}, cardio: null };
+    byDate[c.date].cardio = c;
   });
 
   const dates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
   let html = '';
 
   dates.forEach(date => {
-    const d          = new Date(date + 'T12:00:00');
-    const dateLabel  = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-    const exercises  = byDate[date];
-    const exNames    = Object.keys(exercises);
-    const workoutName = logs.find(l => l.date === date)?.workout || 'Workout';
-    const totalSets  = Object.values(exercises).reduce((s, sets) => s + sets.length, 0);
+    const d         = new Date(date + 'T12:00:00');
+    const dateLabel = d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const { gym: exercises, cardio } = byDate[date];
+    const exNames = Object.keys(exercises);
+    let sessionHtml = '';
 
-    const exerciseDetails = exNames.map(ex => {
-      const sets    = exercises[ex].sort((a,b) => a.setIdx - b.setIdx);
-      const setRows = sets.map(s => `
-        <div class="session-set-row">
-          <span class="set-label">Set ${s.setIdx + 1}</span>
-          <span class="set-data">${s.weight > 0 ? s.weight + ' kg' : '—'} × ${s.reps > 0 ? s.reps + ' reps' : '—'}</span>
-        </div>`).join('');
-      return `
-        <div class="session-exercise">
-          <div class="session-exercise-name">${ex}</div>
-          <div class="session-sets">${setRows}</div>
-        </div>`;
-    }).join('');
-
-    html += `
-      <div class="session-group">
-        <div class="session-date">${dateLabel}</div>
+    if (exNames.length) {
+      const workoutName = logs.find(l => l.date === date)?.workout || 'Workout';
+      const totalSets   = Object.values(exercises).reduce((s, sets) => s + sets.length, 0);
+      const exerciseDetails = exNames.map(ex => {
+        const sets    = exercises[ex].sort((a,b) => a.setIdx - b.setIdx);
+        const setRows = sets.map(s => `
+          <div class="session-set-row">
+            <span class="set-label">Set ${s.setIdx + 1}</span>
+            <span class="set-data">${s.weight > 0 ? s.weight + ' kg' : '—'} × ${s.reps > 0 ? s.reps + ' reps' : '—'}</span>
+          </div>`).join('');
+        return `
+          <div class="session-exercise">
+            <div class="session-exercise-name">${ex}</div>
+            <div class="session-sets">${setRows}</div>
+          </div>`;
+      }).join('');
+      sessionHtml += `
         <div class="session-card">
           <div class="session-card-header" onclick="toggleSession(this)">
             <div>
@@ -1748,7 +1868,30 @@ function renderHistory() {
             </div>
           </div>
           <div class="session-detail">${exerciseDetails}</div>
-        </div>
+        </div>`;
+    }
+
+    if (cardio) {
+      const icon = cardio.type === 'Swim' ? '🏊' : '🏃';
+      sessionHtml += `
+        <div class="session-card" style="background:var(--card-bg)">
+          <div class="session-card-header" style="cursor:default">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:1.4rem">${icon}</span>
+              <div>
+                <h3>${cardio.type}</h3>
+                <div class="session-summary">${cardio.duration} min</div>
+              </div>
+            </div>
+            <button class="session-del-btn" onclick="deleteCardioEntry('${date}')">×</button>
+          </div>
+        </div>`;
+    }
+
+    html += `
+      <div class="session-group">
+        <div class="session-date">${dateLabel}</div>
+        ${sessionHtml}
       </div>`;
   });
 
