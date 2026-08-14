@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=2');
+    navigator.serviceWorker.register('sw.js?v=3');
   }
 </script>
 <style>
@@ -218,6 +218,10 @@ body {
 .rest-screen .emoji { font-size: 64px; margin-bottom: 16px; }
 .rest-screen h2 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
 .rest-screen p { color: var(--sub); font-size: 16px; line-height: 1.5; }
+.rest-fuel-note {
+  margin-top: 18px; padding: 10px 18px; border-radius: 20px;
+  background: rgba(255,255,255,.06); font-size: 14px;
+}
 .cardio-del-btn {
   margin-top: 16px;
   padding: 8px 20px;
@@ -392,7 +396,140 @@ body {
 .session-set-row .set-label { color: var(--sub); min-width: 36px; }
 .session-set-row .set-data { color: var(--text); font-weight: 600; }
 
-/* ── Weight tracker ── */
+/* ── Fuel strip (always visible, every tab) ── */
+.fuel-strip {
+  padding: 8px 16px 10px; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  -webkit-tap-highlight-color: transparent;
+}
+.fuel-strip-row { display: flex; align-items: baseline; gap: 14px; font-size: 13px; font-weight: 600; }
+.fuel-strip-of { font-weight: 400; color: var(--sub); font-size: 11px; }
+.fuel-strip-prot { color: var(--green); }
+.fuel-strip-status { margin-left: auto; font-size: 11px; color: var(--sub); font-weight: 500; }
+.fuel-strip-track {
+  height: 3px; border-radius: 2px; background: rgba(255,255,255,.08);
+  margin-top: 6px; overflow: hidden;
+}
+.fuel-strip-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s; }
+
+/* ── Recipes ── */
+.recipe-list { padding: 0 16px; margin-bottom: 16px; }
+.recipe-card {
+  background: var(--card); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 10px;
+}
+.recipe-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.recipe-name { font-size: 15px; font-weight: 700; }
+.recipe-macros { font-size: 12.5px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+.recipe-method { font-size: 13px; color: #c7c7cc; line-height: 1.45; margin-top: 8px; }
+.recipe-log-btn {
+  width: 100%; margin-top: 12px; padding: 9px 0;
+  background: rgba(255,255,255,.08); border: none; border-radius: 10px;
+  color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.recipe-log-btn:active { background: rgba(255,255,255,.16); }
+.recipe-method-input {
+  width: 100%; padding: 10px 12px; background: rgba(255,255,255,.06);
+  border: none; border-radius: 10px; color: inherit; font: inherit; font-size: 13px;
+  resize: vertical;
+}
+.recipe-empty { color: var(--sub); font-size: 13px; padding: 4px 2px 14px; }
+
+/* ── Daily notes (food intolerance tracking) ── */
+.note-hint { font-size: 12px; color: var(--sub); line-height: 1.4; margin-bottom: 10px; }
+.note-input {
+  width: 100%; padding: 10px 12px; background: rgba(255,255,255,.06);
+  border: none; border-radius: 10px; color: inherit; font: inherit; font-size: 13px;
+  resize: vertical;
+}
+.day-note-display {
+  margin: 0 16px 12px; padding: 10px 14px 14px;
+  font-size: 13px; color: #c7c7cc; font-style: italic; line-height: 1.4;
+}
+
+/* ── Gain tracker ── */
+.gain-hero {
+  background: var(--card); border-radius: var(--radius);
+  padding: 18px 16px; margin-bottom: 14px;
+}
+.gain-hero-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.gain-trend-val { font-size: 42px; font-weight: 700; line-height: 1; letter-spacing: -1px; }
+.gain-unit { font-size: 18px; font-weight: 600; color: var(--sub); margin-left: 4px; }
+.gain-trend-lbl { font-size: 12px; color: var(--sub); margin-top: 6px; }
+.gain-rate { text-align: right; }
+.gain-rate-val { font-size: 26px; font-weight: 700; line-height: 1; }
+.gain-rate-lbl { font-size: 11px; color: var(--sub); margin-top: 4px; }
+.gain-verdict {
+  margin-top: 16px; padding: 12px 14px;
+  border-left: 3px solid var(--sub); border-radius: 8px;
+  background: rgba(255,255,255,.04);
+}
+.gain-verdict-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.gain-verdict-detail { font-size: 13px; color: #c7c7cc; line-height: 1.45; }
+.gain-projection { margin-top: 12px; font-size: 12.5px; color: var(--sub); text-align: center; }
+
+.fuel-card {
+  background: var(--card); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 14px;
+}
+.fuel-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.calib-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.calib-lbl { font-size: 12px; color: var(--sub); }
+.calib-val { font-size: 17px; font-weight: 700; }
+.calib-detail { font-size: 12.5px; color: #c7c7cc; line-height: 1.5; }
+.calib-target { margin-top: 10px; font-size: 12.5px; color: var(--green); }
+.fuel-left { font-size: 12px; color: var(--sub); }
+.fuel-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.fuel-lbl { font-size: 13px; color: var(--sub); }
+.fuel-val { font-size: 14px; font-weight: 600; }
+
+.repeat-yesterday-btn {
+  width: 100%; margin-top: 14px; padding: 10px 0;
+  background: rgba(255,255,255,.06); border: 1px dashed rgba(255,255,255,.2); border-radius: 10px;
+  color: var(--sub); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.repeat-yesterday-btn:active { background: rgba(255,255,255,.12); color: #fff; }
+
+.food-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 8px; margin-top: 16px;
+}
+.food-btn {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 2px; padding: 10px 12px;
+  background: rgba(255,255,255,.06); border: none; border-radius: 10px;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.food-btn:active { background: rgba(255,255,255,.14); transform: scale(.97); }
+.food-icon { font-size: 17px; }
+.food-name { font-size: 12.5px; font-weight: 600; }
+.food-kcal { font-size: 11px; color: var(--sub); }
+
+.quick-add-row { display: flex; gap: 8px; margin-top: 12px; }
+.quick-input {
+  flex: 1; min-width: 0; padding: 10px 12px;
+  background: rgba(255,255,255,.06); border: none; border-radius: 10px;
+  color: inherit; font: inherit; font-size: 15px;
+}
+.food-entries { margin-top: 14px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; }
+.food-entry-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; font-size: 13px;
+}
+.food-entry-name { flex: 1; }
+.food-entry-val { color: var(--sub); font-size: 12px; }
+
+.intake-strip { display: flex; gap: 8px; align-items: flex-end; margin-top: 6px; }
+.intake-day { flex: 1; text-align: center; }
+.intake-bar-track {
+  height: 64px; border-radius: 6px; background: rgba(255,255,255,.06);
+  display: flex; align-items: flex-end; overflow: hidden;
+}
+.intake-bar-fill { width: 100%; border-radius: 6px; transition: height .3s; }
+.intake-lbl { font-size: 10px; color: var(--sub); margin-top: 5px; }
+
 .weight-entry-card, .weight-goal-card, .weight-chart-card, .weight-history-card {
   background: var(--card);
   border-radius: var(--radius);
@@ -722,6 +859,8 @@ body {
     <button class="replan-btn" onclick="openReplanSheet()">↻ replan week</button>
   </div>
 
+  <div id="fuelStrip" class="fuel-strip" onclick="switchTab('weight')"></div>
+
   <div class="view active" id="view-today">
     <div id="todayContent"></div>
   </div>
@@ -736,6 +875,10 @@ body {
 
   <div class="view" id="view-graphs">
     <div id="graphsContent"></div>
+  </div>
+
+  <div class="view" id="view-recipes">
+    <div id="recipesContent"></div>
   </div>
 
   <nav class="nav">
@@ -757,7 +900,7 @@ body {
         <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
         <polyline points="17 6 23 6 23 12"/>
       </svg>
-      Weight
+      Gain
     </button>
     <button class="nav-btn" id="nav-graphs" onclick="switchTab('graphs')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -765,6 +908,13 @@ body {
         <line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/>
       </svg>
       Graphs
+    </button>
+    <button class="nav-btn" id="nav-recipes" onclick="switchTab('recipes')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8a6 6 0 0 1-7.743 5.743L10 14l-6 6-2-2 6-6 .257-.257A6 6 0 1 1 18 8z"/>
+        <path d="M18 8h.01"/>
+      </svg>
+      Recipes
     </button>
   </nav>
 </div>
@@ -899,6 +1049,8 @@ let allLogs     = [];
 let allWeights  = [];
 let weekPlans   = {};   // mondayStr -> { dow: workoutName|null, ... }
 let allCardio   = [];   // { date, type ('Swim'|'Run'), duration (mins) }
+let allNutrition = {};  // { 'YYYY-MM-DD': { date, kcal, protein, entries: [{name,kcal,protein}], note } }
+let allRecipes   = [];  // { _id, name, kcal, protein, method }
 const extraSets = {};
 let selectedDate          = todayStr;
 let scheduledDow          = todayDow;
@@ -1218,12 +1370,24 @@ function checkWorkoutComplete() {
     return `<div class="complete-banner-stat"><div class="complete-banner-stat-val">${dur}</div><div class="complete-banner-stat-lbl">Duration</div></div>`;
   })() : '';
 
+  // Post-workout is the biggest single moment of attention this app gets. The training
+  // is done and hunger often drops right afterward, which is the worst time to also
+  // forget the calories owed. So the banner that already interrupts you gets a third
+  // stat: what's left to eat today, using the same number as the fuel strip.
+  const short = KCAL_TARGET - dayNutrition(todayStr).kcal;
+  const fuelHtml = `
+    <div class="complete-banner-stat">
+      <div class="complete-banner-stat-val" style="color:${short > 0 ? '#fff' : 'var(--green)'}">${short > 0 ? short.toLocaleString() : '✓'}</div>
+      <div class="complete-banner-stat-lbl">${short > 0 ? 'cal still owed' : 'cal hit'}</div>
+    </div>`;
+
   document.getElementById('completeBannerStats').innerHTML = `
     <div class="complete-banner-stat">
       <div class="complete-banner-stat-val">${Math.round(volume).toLocaleString()}</div>
       <div class="complete-banner-stat-lbl">kg volume</div>
     </div>
-    ${durationHtml}`;
+    ${durationHtml}
+    ${fuelHtml}`;
   document.getElementById('completeBanner').classList.add('show');
 }
 
@@ -1331,9 +1495,12 @@ auth.onAuthStateChanged(async user => {
     await loadWeights();
     await loadWeekPlans();
     await loadCardio();
+    await loadNutrition();
+    await loadRecipes();
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('signin-screen').style.display  = 'none';
     document.getElementById('app').style.display = 'block';
+    renderFuelStrip();
     selectDate(todayStr, todayDow);
   } else {
     document.getElementById('loading-screen').style.display = 'none';
@@ -1436,6 +1603,181 @@ async function saveWeekPlan(mondayStr, plan) {
   await userWeekPlans().doc(mondayStr).set(plan);
 }
 
+// ── Nutrition Firestore helpers ────────────────────────────────────────────────
+// One doc per day, keyed YYYY-MM-DD. Entries are appended, never edited, so a
+// mis-tap is undone by removing one entry rather than recomputing a running total.
+function userNutrition() {
+  return db.collection('users').doc(currentUser.uid).collection('nutrition');
+}
+
+async function loadNutrition() {
+  const snapshot = await userNutrition().get();
+  allNutrition = {};
+  snapshot.docs.forEach(d => { allNutrition[d.id] = { ...d.data() }; });
+}
+
+function dayNutrition(dateStr) {
+  return allNutrition[dateStr] || { date: dateStr, kcal: 0, protein: 0, entries: [] };
+}
+
+async function addFood(name, kcal, protein) {
+  const day = dayNutrition(todayStr);
+  day.entries = [...(day.entries || []), { name, kcal, protein, t: Date.now() }];
+  day.kcal    = day.entries.reduce((s, e) => s + e.kcal, 0);
+  day.protein = day.entries.reduce((s, e) => s + e.protein, 0);
+  allNutrition[todayStr] = day;
+  renderGain();                                    // optimistic, the number moves instantly
+  renderFuelStrip();
+  await userNutrition().doc(todayStr).set(day);
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+window.addFood = addFood;
+
+async function removeFoodEntry(idx) {
+  const day = dayNutrition(todayStr);
+  day.entries = (day.entries || []).filter((_, i) => i !== idx);
+  day.kcal    = day.entries.reduce((s, e) => s + e.kcal, 0);
+  day.protein = day.entries.reduce((s, e) => s + e.protein, 0);
+  allNutrition[todayStr] = day;
+  renderGain();
+  renderFuelStrip();
+  await userNutrition().doc(todayStr).set(day);
+}
+window.removeFoodEntry = removeFoodEntry;
+
+// Repeat yesterday: clone yesterday's entries onto today in one tap. The common case for
+// someone who forgets to eat is not exotic meals, it's the same shake and the same lunch
+// most days. Cutting that from N taps to 1 removes the exact friction that causes the
+// forgetting in the first place. Result is editable afterward like anything else logged.
+async function repeatYesterdayUI() {
+  const y = new Date(today.getTime() - 864e5).toISOString().slice(0, 10);
+  const yEntries = dayNutrition(y).entries || [];
+  if (!yEntries.length) return;
+
+  const day = dayNutrition(todayStr);
+  day.entries = [...(day.entries || []), ...yEntries.map(e => ({ ...e, t: Date.now() }))];
+  day.kcal    = day.entries.reduce((s, e) => s + e.kcal, 0);
+  day.protein = day.entries.reduce((s, e) => s + e.protein, 0);
+  allNutrition[todayStr] = day;
+  renderGain();
+  renderFuelStrip();
+  await userNutrition().doc(todayStr).set(day);
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+window.repeatYesterdayUI = repeatYesterdayUI;
+
+// Notes are kept on the same nutrition doc as the food entries for that day, deliberately,
+// so reviewing a day always shows what was eaten and how it felt together. Finding a food
+// intolerance pattern needs exactly that pairing; two separate logs would make the
+// comparison a manual chore instead of something the app does for you.
+async function saveDayNoteUI() {
+  const note = document.getElementById('dayNote').value.trim();
+  const day = dayNutrition(todayStr);
+  day.note = note;
+  allNutrition[todayStr] = day;
+  await userNutrition().doc(todayStr).set(day);
+  const btn = event?.target;
+  if (btn) { const orig = btn.textContent; btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = orig, 1200); }
+}
+window.saveDayNoteUI = saveDayNoteUI;
+
+async function quickAddUI() {
+  const kcalIn = document.getElementById('quickKcal');
+  const protIn = document.getElementById('quickProt');
+  const kcal   = parseInt(kcalIn.value, 10);
+  if (!kcal || kcal < 1 || kcal > 5000) return;
+  const protein = parseInt(protIn.value, 10) || 0;
+  kcalIn.value = ''; protIn.value = '';
+  await addFood('Quick add', kcal, protein);
+}
+window.quickAddUI = quickAddUI;
+
+// ── Recipes ─────────────────────────────────────────────────────────────────────
+// A saved shortlist of go-to high-calorie things that are actually easy to make, not
+// an aspirational cookbook. Each one logs to today in one tap, same as the FOODS
+// presets, so a "recipe" and a "food" are the same underlying action, just user-owned.
+function userRecipes() {
+  return db.collection('users').doc(currentUser.uid).collection('recipes');
+}
+
+// Seeded once if the user has never saved anything, so the tab is useful on first
+// load rather than empty. All editable/deletable afterward like any saved recipe.
+const STARTER_RECIPES = [
+  { name: 'Mass gainer shake', kcal: 820, protein: 48,
+    method: '500ml whole milk, 2 scoops whey, 80g oats, 2tbs peanut butter, 1 banana. Blend.' },
+  { name: 'Loaded oats', kcal: 650, protein: 28,
+    method: '100g oats cooked in whole milk, 1 scoop whey stirred in once off heat, 1tbs peanut butter, handful of nuts.' },
+  { name: 'Rice, chicken, oil', kcal: 780, protein: 45,
+    method: '250g cooked rice, 150g chicken thigh, 1tbs olive oil stirred through. Batch-cookable.' },
+];
+
+async function loadRecipes() {
+  const snapshot = await userRecipes().get();
+  allRecipes = snapshot.docs.map(d => ({ _id: d.id, ...d.data() }));
+  if (allRecipes.length === 0) {
+    for (const r of STARTER_RECIPES) {
+      const ref = await userRecipes().add(r);
+      allRecipes.push({ _id: ref.id, ...r });
+    }
+  }
+}
+
+async function addRecipeUI() {
+  const name   = document.getElementById('recipeName').value.trim();
+  const kcal   = parseInt(document.getElementById('recipeKcal').value, 10);
+  const protein = parseInt(document.getElementById('recipeProt').value, 10) || 0;
+  const method = document.getElementById('recipeMethod').value.trim();
+  if (!name || !kcal || kcal < 1 || kcal > 5000) return;
+  const doc = { name, kcal, protein, method };
+  const ref = await userRecipes().add(doc);
+  allRecipes.push({ _id: ref.id, ...doc });
+  renderRecipes();
+}
+window.addRecipeUI = addRecipeUI;
+
+async function deleteRecipe(id) {
+  await userRecipes().doc(id).delete();
+  allRecipes = allRecipes.filter(r => r._id !== id);
+  renderRecipes();
+}
+window.deleteRecipe = deleteRecipe;
+
+// Logging a recipe is exactly addFood with the recipe's macros; kept as one call so a
+// recipe and a quick-add food are indistinguishable once logged.
+async function logRecipe(id) {
+  const r = allRecipes.find(x => x._id === id);
+  if (r) await addFood(r.name, r.kcal, r.protein);
+}
+window.logRecipe = logRecipe;
+
+function renderRecipes() {
+  const el = document.getElementById('recipesContent');
+  const cards = allRecipes.map(r => `
+    <div class="recipe-card">
+      <div class="recipe-head">
+        <div class="recipe-name">${r.name}</div>
+        <button class="weight-del-btn" onclick="deleteRecipe('${r._id}')">×</button>
+      </div>
+      <div class="recipe-macros">${r.kcal} cal${r.protein ? ` · ${r.protein}g protein` : ''}</div>
+      ${r.method ? `<div class="recipe-method">${r.method}</div>` : ''}
+      <button class="recipe-log-btn" onclick="logRecipe('${r._id}')">+ Log to today</button>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="weight-section-title" style="margin:0 0 4px 16px">Go-to recipes</div>
+    <div class="recipe-list">${cards || '<div class="recipe-empty">Nothing saved yet.</div>'}</div>
+    <div class="fuel-card" style="margin:0 16px 20px">
+      <div class="weight-section-title">Add a recipe</div>
+      <input class="quick-input" style="width:100%;margin-bottom:8px" id="recipeName" placeholder="Name">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input class="quick-input" type="number" inputmode="numeric" id="recipeKcal" placeholder="cal">
+        <input class="quick-input" type="number" inputmode="numeric" id="recipeProt" placeholder="protein g">
+      </div>
+      <textarea class="recipe-method-input" id="recipeMethod" placeholder="How you make it (optional)" rows="2"></textarea>
+      <button class="weight-log-btn" style="width:100%;margin-top:10px" onclick="addRecipeUI()">Save recipe</button>
+    </div>`;
+}
+
 // ── Weight Firestore helpers ───────────────────────────────────────────────────
 function userWeights() {
   return db.collection('users').doc(currentUser.uid).collection('weights');
@@ -1450,7 +1792,7 @@ async function loadWeights() {
 async function deleteWeight(id) {
   await userWeights().doc(id).delete();
   allWeights = allWeights.filter(w => w._id !== id);
-  renderWeight();
+  renderGain();
 }
 
 async function deleteSession(date) {
@@ -1483,7 +1825,7 @@ async function logWeightUI() {
   allWeights.sort((a, b) => a.date.localeCompare(b.date));
 
   showSyncToast();
-  renderWeight();
+  renderGain();
 }
 
 async function logSet(exIdx, exercise, setIdx, weight, reps) {
@@ -1545,8 +1887,29 @@ function switchTab(tab) {
   document.getElementById('view-' + tab).classList.add('active');
   document.getElementById('nav-' + tab).classList.add('active');
   if (tab === 'history') renderHistory();
-  if (tab === 'weight')  renderWeight();
+  if (tab === 'weight')  renderGain();
   if (tab === 'graphs')  renderGraphs();
+  if (tab === 'recipes') renderRecipes();
+}
+
+// ── Fuel strip: one line, always visible, regardless of which tab or date is open ──────────────
+// The point is not the workout tab. It is that you already open this app for the workout, and the
+// eating problem hides behind a tab switch you were never going to make. So this shows on every
+// screen, keyed to TODAY specifically (not selectedDate), because "did I eat enough today" is the
+// question, not "did I eat enough on the day I'm reviewing".
+function renderFuelStrip() {
+  const el = document.getElementById('fuelStrip');
+  if (!el) return;
+  const day = dayNutrition(todayStr);
+  const kcalPct = Math.min(100, Math.round((day.kcal / KCAL_TARGET) * 100));
+  const short    = KCAL_TARGET - day.kcal;
+  el.innerHTML = `
+    <div class="fuel-strip-row">
+      <span class="fuel-strip-kcal">${day.kcal.toLocaleString()} <span class="fuel-strip-of">/ ${KCAL_TARGET.toLocaleString()} cal</span></span>
+      <span class="fuel-strip-prot">${day.protein}<span class="fuel-strip-of">/${PROTEIN_TARGET}g protein</span></span>
+      <span class="fuel-strip-status">${short > 0 ? `${short} to go` : 'hit ✓'}</span>
+    </div>
+    <div class="fuel-strip-track"><div class="fuel-strip-fill" style="width:${kcalPct}%"></div></div>`;
 }
 
 // ── Render today ──────────────────────────────────────────────────────────────
@@ -1557,11 +1920,19 @@ function renderToday() {
 
   if (!workout) {
     document.getElementById('workoutTitle').textContent = 'Rest Day';
+    // Rest days have no post-workout hunger cue, which makes them the easiest day to
+    // under-eat on without noticing. The generic "eat well" line did nothing; the real
+    // number does. Only shown for TODAY, since a past rest day's number is not actionable.
+    const isToday = selectedDate === todayStr;
+    const day = isToday ? dayNutrition(todayStr) : null;
+    const short = day ? KCAL_TARGET - day.kcal : null;
     document.getElementById('todayContent').innerHTML = `
       <div class="rest-screen">
         <div class="emoji">😴</div>
         <h2>Recovery Day</h2>
-        <p>Rest is where the gains happen.<br>Eat well, sleep well, come back stronger.</p>
+        <p>Rest is where the gains happen. No training cue to eat today, so it's on you.</p>
+        ${isToday ? `<div class="rest-fuel-note">${short > 0
+            ? `<strong>${short} cal</strong> still needed today` : 'Calories hit for today ✓'}</div>` : ''}
       </div>`;
     return;
   }
@@ -1809,7 +2180,8 @@ function renderHistory() {
   const logs      = getLogs();
   const container = document.getElementById('historyContent');
 
-  if (!logs.length && !allCardio.length) {
+  const hasNotes = Object.values(allNutrition).some(n => n.note && n.note.trim());
+  if (!logs.length && !allCardio.length && !hasNotes) {
     container.innerHTML = `
       <div class="history-empty">
         <div class="emoji">📋</div>
@@ -1827,6 +2199,14 @@ function renderHistory() {
   allCardio.forEach(c => {
     if (!byDate[c.date]) byDate[c.date] = { gym: {}, cardio: null };
     byDate[c.date].cardio = c;
+  });
+  // A day with a symptom note but no workout (a rest day, or a day skipped) still needs to
+  // appear here. The point of History for the intolerance investigation is being able to
+  // scan several days of food + how-it-felt in a row, not just today's.
+  Object.values(allNutrition).forEach(n => {
+    if (n.note && n.note.trim()) {
+      if (!byDate[n.date]) byDate[n.date] = { gym: {}, cardio: null };
+    }
   });
 
   const dates = Object.keys(byDate).sort((a,b) => b.localeCompare(a));
@@ -1885,6 +2265,22 @@ function renderHistory() {
             </div>
             <button class="session-del-btn" onclick="deleteCardioEntry('${date}')">×</button>
           </div>
+        </div>`;
+    }
+
+    // Food + how-it-felt, shown together on purpose. See saveDayNoteUI for why.
+    const nutriDay = allNutrition[date];
+    if (nutriDay && ((nutriDay.entries || []).length || (nutriDay.note && nutriDay.note.trim()))) {
+      const foodList = (nutriDay.entries || []).map(e => e.name).join(', ');
+      sessionHtml += `
+        <div class="session-card" style="background:var(--card-bg)">
+          <div class="session-card-header" style="cursor:default">
+            <div>
+              <h3>🍽 ${nutriDay.kcal || 0} cal${nutriDay.protein ? ` · ${nutriDay.protein}g protein` : ''}</h3>
+              ${foodList ? `<div class="session-summary">${foodList}</div>` : ''}
+            </div>
+          </div>
+          ${nutriDay.note ? `<div class="day-note-display">${nutriDay.note}</div>` : ''}
         </div>`;
     }
 
@@ -2046,11 +2442,159 @@ function doSwap(el) {
   renderToday();
 }
 
-// ── Weight tracker ─────────────────────────────────────────────────────────────
+// ── Gain tracker ───────────────────────────────────────────────────────────────
+// This app's real job is not counting sets. At 189cm and 63kg the binding
+// constraint is eating 3,350 cal a day, consistently, which is hard. So the
+// numbers that matter are: the weight TREND (not today's reading), the RATE of
+// gain against target, and how many calories short of that rate you are.
 const WEIGHT_START = 63;
 const WEIGHT_GOAL  = 70;
 
-function renderWeight() {
+const KCAL_TARGET    = 3350;
+const PROTEIN_TARGET = 139;
+const RATE_MIN       = 0.6;    // kg/week, the plan's target band
+const RATE_MAX       = 0.8;
+const KCAL_PER_KG    = 7700;   // energy in a kg of mixed tissue gained
+
+// Foods from the nutrition plan, plus the calorie-dense staples that actually
+// close a 3,350 cal day. One tap each. The Excel meal tracker was never filled
+// in once, which is the whole argument for this being taps and not typing.
+const FOODS = [
+  { name: 'Whey shake',        kcal: 120, protein: 25, icon: '🥤' },
+  { name: 'Greek yogurt 200g', kcal: 130, protein: 20, icon: '🥛' },
+  { name: 'Eggs ×2',           kcal: 140, protein: 13, icon: '🥚' },
+  { name: 'Chicken 100g',      kcal: 165, protein: 31, icon: '🍗' },
+  { name: 'Cottage cheese',    kcal: 160, protein: 23, icon: '🧀' },
+  { name: 'Salmon 100g',       kcal: 206, protein: 25, icon: '🐟' },
+  { name: 'Lean beef 100g',    kcal: 250, protein: 26, icon: '🥩' },
+  { name: 'Lentils 200g',      kcal: 230, protein: 18, icon: '🫘' },
+  { name: 'Oats 100g',         kcal: 380, protein: 13, icon: '🥣' },
+  { name: 'Rice 250g cooked',  kcal: 325, protein:  7, icon: '🍚' },
+  { name: 'Peanut butter 2tbs',kcal: 190, protein:  8, icon: '🥜' },
+  { name: 'Banana',            kcal: 105, protein:  1, icon: '🍌' },
+  { name: 'Whole milk 500ml',  kcal: 320, protein: 17, icon: '🥛' },
+  { name: 'Olive oil 1tbs',    kcal: 120, protein:  0, icon: '🫒' },
+  { name: 'Nuts 50g',          kcal: 300, protein: 10, icon: '🌰' },
+  { name: 'Avocado',           kcal: 240, protein:  3, icon: '🥑' },
+];
+
+// A single weigh-in swings a kilo on water, salt and gut content. Reading one
+// morning's number as progress or failure is noise. The trailing 7-day mean is
+// the honest signal, and it is what the rate is computed from.
+function trendSeries(days = 7) {
+  return allWeights.map((w, i) => {
+    const cutoff = new Date(new Date(w.date + 'T12:00:00').getTime() - (days - 1) * 864e5);
+    const window = allWeights.slice(0, i + 1)
+      .filter(x => new Date(x.date + 'T12:00:00') >= cutoff);
+    const mean = window.reduce((s, x) => s + x.weight, 0) / window.length;
+    return { date: w.date, weight: +mean.toFixed(2), n: window.length };
+  });
+}
+
+// Least-squares slope over the trend, in kg per week. Regression rather than
+// (last - first) / weeks because it uses every point and one odd weigh-in at
+// either end cannot swing the answer.
+function gainRate(windowDays = 21) {
+  const trend = trendSeries();
+  if (trend.length < 4) return null;
+  const cutoff = new Date(Date.now() - windowDays * 864e5);
+  const pts = trend.filter(p => new Date(p.date + 'T12:00:00') >= cutoff);
+  if (pts.length < 4) return null;
+
+  const t0 = new Date(pts[0].date + 'T12:00:00').getTime();
+  const xs = pts.map(p => (new Date(p.date + 'T12:00:00').getTime() - t0) / 864e5);
+  const ys = pts.map(p => p.weight);
+  const n  = xs.length;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  const den = xs.reduce((s, x) => s + (x - mx) ** 2, 0);
+  if (den === 0) return null;
+  const slopePerDay = xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / den;
+  return { rate: +(slopePerDay * 7).toFixed(2), days: Math.round(xs[n - 1] - xs[0]), points: n };
+}
+
+// The feedback loop, and the reason the whole tab exists. If the trend says you
+// are gaining 0.3 kg/wk against a 0.6 target, the shortfall is 0.3 kg/wk of
+// tissue, which is 0.3 x 7700 / 7 ~ 330 cal a day. That is an instruction, not a
+// dashboard.
+function gainVerdict() {
+  const g = gainRate();
+  const latestTrend = trendSeries().slice(-1)[0];
+  if (!g || !latestTrend) {
+    return { state: 'unknown', title: 'Not enough data yet',
+             detail: 'Weigh in most mornings for two weeks and this starts working.' };
+  }
+  const { rate } = g;
+  if (rate >= RATE_MIN && rate <= RATE_MAX) {
+    return { state: 'good', rate, title: 'On track',
+             detail: `Gaining ${rate} kg/week, inside the ${RATE_MIN}-${RATE_MAX} target band. Keep eating exactly as you are.` };
+  }
+  if (rate > RATE_MAX) {
+    const over = +(rate - RATE_MAX).toFixed(2);
+    return { state: 'fast', rate, title: 'Gaining fast',
+             detail: `${rate} kg/week is above the ${RATE_MAX} ceiling. Some of that is fat. Cut roughly ${Math.round(over * KCAL_PER_KG / 7)} cal/day.` };
+  }
+  const short = +(RATE_MIN - rate).toFixed(2);
+  const extra = Math.round(short * KCAL_PER_KG / 7);
+  return {
+    state: rate <= 0 ? 'bad' : 'slow', rate,
+    title: rate <= 0 ? 'Not gaining' : 'Too slow',
+    detail: `${rate > 0 ? 'Gaining ' + rate : 'Losing ' + Math.abs(rate)} kg/week against a ${RATE_MIN} target. Eat about ${extra} more cal/day, which is ${extra > 400 ? 'a shake and a handful of nuts' : 'roughly one shake'}.`
+  };
+}
+
+function projectGoalDate() {
+  const g = gainRate();
+  const trend = trendSeries();
+  if (!g || g.rate <= 0 || !trend.length) return null;
+  const current = trend[trend.length - 1].weight;
+  if (current >= WEIGHT_GOAL) return { reached: true };
+  const weeks = (WEIGHT_GOAL - current) / g.rate;
+  // A near-stalled trend projects an absurd date ("70kg by April 2029"), which is
+  // discouraging noise rather than information. Past a year, say so plainly instead.
+  if (weeks > 52) return { tooSlow: true };
+  const d = new Date(Date.now() + weeks * 7 * 864e5);
+  return { weeks: +weeks.toFixed(1), date: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) };
+}
+
+// The 3,350 target came from the Mifflin-St Jeor formula, never from measuring Alex
+// specifically. Kept only as a reference point to compare against, not treated as ground
+// truth. See Gym 2026 Claude/CONTEXT.md.
+const FORMULA_TDEE = 2682;
+
+// Maintenance calibration (added 2026-08-14, from the hardgainer research brief). The app
+// already collects everything needed to check the formula against reality: gainRate() gives
+// the real kg/week from actual weigh-ins, and the nutrition log gives real logged intake over
+// the same period. Real maintenance = average intake minus the calories that produced the
+// observed rate of gain (rate * 7700 / 7). This only means anything once there is enough
+// real data, which is why it is gated rather than always shown.
+function maintenanceCalibration(windowDays = 28) {
+  const cutoff = new Date(Date.now() - windowDays * 864e5);
+  const loggedDays = Object.values(allNutrition).filter(n =>
+    n.kcal > 0 && new Date(n.date + 'T12:00:00') >= cutoff);
+  const g = gainRate(windowDays);
+
+  // Both gates matter independently: enough logged days to trust the average intake, and
+  // enough weigh-ins (gainRate's own check) to trust the rate. Neither substitutes for the
+  // other, so both must pass before the number is shown as anything but noise.
+  if (loggedDays.length < 10 || !g) {
+    return { ready: false, loggedDays: loggedDays.length, needed: 10 };
+  }
+
+  const avgKcal      = loggedDays.reduce((s, n) => s + n.kcal, 0) / loggedDays.length;
+  const surplusPerDay = g.rate * KCAL_PER_KG / 7;
+  const realMaintenance = Math.round(avgKcal - surplusPerDay);
+  const targetLow  = Math.round(realMaintenance + RATE_MIN * KCAL_PER_KG / 7);
+  const targetHigh = Math.round(realMaintenance + RATE_MAX * KCAL_PER_KG / 7);
+  const formulaGap = realMaintenance - FORMULA_TDEE;
+
+  return {
+    ready: true, loggedDays: loggedDays.length, avgKcal: Math.round(avgKcal),
+    realMaintenance, targetLow, targetHigh, formulaGap, rate: g.rate,
+  };
+}
+
+function renderGain() {
   const container  = document.getElementById('weightContent');
   const dateLabel  = today.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
   const todayEntry = allWeights.find(w => w.date === todayStr);
@@ -2059,6 +2603,140 @@ function renderWeight() {
   const gained     = +(current - WEIGHT_START).toFixed(1);
   const remaining  = +(WEIGHT_GOAL - current).toFixed(1);
   const pct        = Math.min(100, Math.max(0, Math.round(((current - WEIGHT_START) / (WEIGHT_GOAL - WEIGHT_START)) * 100)));
+
+  // ── the numbers that actually matter ───────────────────────────────────────
+  const trend      = trendSeries();
+  const trendNow   = trend.length ? trend[trend.length - 1].weight : null;
+  const verdict    = gainVerdict();
+  const projection = projectGoalDate();
+  const day        = dayNutrition(todayStr);
+  const kcalLeft   = Math.max(0, KCAL_TARGET - day.kcal);
+  const kcalPct    = Math.min(100, Math.round((day.kcal / KCAL_TARGET) * 100));
+  const protPct    = Math.min(100, Math.round((day.protein / PROTEIN_TARGET) * 100));
+  const hoursLeft  = Math.max(0, 22 - new Date().getHours());   // assume last food ~22:00
+  const yesterdayStr = new Date(today.getTime() - 864e5).toISOString().slice(0, 10);
+  const yesterdayEntries = dayNutrition(yesterdayStr).entries || [];
+  const calib = maintenanceCalibration();
+
+  const vColour = { good:'var(--green)', fast:'#ff9f0a', slow:'#ff9f0a', bad:'var(--accent)', unknown:'var(--sub)' }[verdict.state];
+
+  const foodBtns = FOODS.map(f => `
+    <button class="food-btn" onclick="addFood('${f.name.replace(/'/g, "\\'")}', ${f.kcal}, ${f.protein})">
+      <span class="food-icon">${f.icon}</span>
+      <span class="food-name">${f.name}</span>
+      <span class="food-kcal">${f.kcal} cal${f.protein ? ` · ${f.protein}p` : ''}</span>
+    </button>`).join('');
+
+  const entryRows = (day.entries || []).map((e, i) => `
+    <div class="food-entry-row">
+      <span class="food-entry-name">${e.name}</span>
+      <span class="food-entry-val">${e.kcal} cal${e.protein ? ` · ${e.protein}p` : ''}</span>
+      <button class="weight-del-btn" onclick="removeFoodEntry(${i})">×</button>
+    </div>`).join('');
+
+  // Last 7 days of intake, so a bad run is visible rather than forgotten.
+  const strip = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today.getTime() - (6 - i) * 864e5);
+    const ds = d.toISOString().slice(0, 10);
+    const n = allNutrition[ds];
+    const hit = n && n.kcal >= KCAL_TARGET * 0.95;
+    const part = n && n.kcal > 0;
+    return `<div class="intake-day">
+        <div class="intake-bar-track"><div class="intake-bar-fill" style="height:${n ? Math.min(100, (n.kcal / KCAL_TARGET) * 100) : 0}%;background:${hit ? 'var(--green)' : part ? '#ff9f0a' : 'transparent'}"></div></div>
+        <div class="intake-lbl">${['S','M','T','W','T','F','S'][d.getDay()]}</div>
+      </div>`;
+  }).join('');
+
+  const gainHeader = `
+    <div class="gain-hero">
+      <div class="gain-hero-top">
+        <div>
+          <div class="gain-trend-val">${trendNow !== null ? trendNow.toFixed(1) : current}<span class="gain-unit">kg</span></div>
+          <div class="gain-trend-lbl">7-day trend${latest ? ` · last weigh-in ${latest.weight}` : ''}</div>
+        </div>
+        <div class="gain-rate" style="color:${vColour}">
+          <div class="gain-rate-val">${verdict.rate !== undefined ? (verdict.rate > 0 ? '+' : '') + verdict.rate : '—'}</div>
+          <div class="gain-rate-lbl">kg/week</div>
+        </div>
+      </div>
+      <div class="gain-verdict" style="border-color:${vColour}">
+        <div class="gain-verdict-title" style="color:${vColour}">${verdict.title}</div>
+        <div class="gain-verdict-detail">${verdict.detail}</div>
+      </div>
+      ${projection ? `<div class="gain-projection">${
+          projection.reached ? 'Goal reached. Time to decide what is next.'
+        : projection.tooSlow ? `At this rate ${WEIGHT_GOAL} kg is over a year away. The rate is the thing to fix, not the patience.`
+        : `At this rate, ${WEIGHT_GOAL} kg around <strong>${projection.date}</strong> (${projection.weeks} weeks)`}</div>` : ''}
+    </div>
+
+    <div class="fuel-card">
+      <div class="weight-section-title" style="margin-bottom:6px">Maintenance check</div>
+      ${calib.ready ? `
+        <div class="calib-row">
+          <span class="calib-lbl">Real maintenance (last ${calib.loggedDays} logged days)</span>
+          <span class="calib-val">~${calib.realMaintenance.toLocaleString()} cal</span>
+        </div>
+        <div class="calib-detail">
+          Worked out from what you actually ate against what the scale actually did, not the
+          formula. ${Math.abs(calib.formulaGap) > 150
+            ? `That's ${calib.formulaGap > 0 ? 'higher' : 'lower'} than the ${FORMULA_TDEE.toLocaleString()} cal
+               the original formula assumed, so the ${KCAL_TARGET.toLocaleString()} target may be
+               ${calib.formulaGap > 0 ? 'an easier surplus than it looks' : 'a bigger, harder surplus than it needs to be'}.`
+            : `That's close to the ${FORMULA_TDEE.toLocaleString()} cal the formula assumed, so the current target is about right.`}
+        </div>
+        <div class="calib-target">Target range for 0.6-0.8 kg/wk: <strong>${calib.targetLow.toLocaleString()}-${calib.targetHigh.toLocaleString()} cal</strong></div>
+      ` : `
+        <div class="calib-detail">Needs a bit more logging before this means anything: real weigh-ins
+          plus real food logs over a few weeks, not a one-off day.
+          <strong>${calib.loggedDays}/${calib.needed}</strong> logged days so far.</div>
+        <div class="progress-bar-track" style="margin-top:8px"><div class="progress-bar-fill" style="width:${Math.min(100, calib.loggedDays / calib.needed * 100)}%"></div></div>
+      `}
+    </div>
+
+    <div class="fuel-card">
+      <div class="fuel-head">
+        <span class="weight-section-title" style="margin:0">Today's fuel</span>
+        <span class="fuel-left">${kcalLeft > 0
+          ? `${kcalLeft} cal left${hoursLeft > 0 ? ` · ~${hoursLeft}h` : ''}`
+          : 'target hit'}</span>
+      </div>
+      <div class="fuel-row">
+        <span class="fuel-lbl">Calories</span>
+        <span class="fuel-val">${day.kcal} / ${KCAL_TARGET}</span>
+      </div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${kcalPct}%"></div></div>
+      <div class="fuel-row" style="margin-top:10px">
+        <span class="fuel-lbl">Protein</span>
+        <span class="fuel-val">${day.protein} / ${PROTEIN_TARGET} g</span>
+      </div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${protPct}%;background:var(--green)"></div></div>
+
+      ${yesterdayEntries.length ? `
+      <button class="repeat-yesterday-btn" onclick="repeatYesterdayUI()">
+        ↻ Repeat yesterday (${yesterdayEntries.length} item${yesterdayEntries.length > 1 ? 's' : ''})
+      </button>` : ''}
+      <div class="food-grid">${foodBtns}</div>
+      <div class="quick-add-row">
+        <input class="quick-input" type="number" inputmode="numeric" id="quickKcal" placeholder="cal">
+        <input class="quick-input" type="number" inputmode="numeric" id="quickProt" placeholder="protein">
+        <button class="weight-log-btn" onclick="quickAddUI()">Add</button>
+      </div>
+      ${entryRows ? `<div class="food-entries">${entryRows}</div>` : ''}
+    </div>
+
+    <div class="fuel-card">
+      <div class="weight-section-title">How did today feel?</div>
+      <div class="note-hint">Symptoms, bloating, energy, anything odd. Kept next to what you ate so a
+        pattern is findable later.</div>
+      <textarea class="note-input" id="dayNote" rows="2"
+        placeholder="e.g. bloated after lunch, tired all afternoon">${day.note || ''}</textarea>
+      <button class="weight-log-btn" style="width:100%;margin-top:8px" onclick="saveDayNoteUI()">Save note</button>
+    </div>
+
+    <div class="fuel-card">
+      <div class="weight-section-title">Last 7 days</div>
+      <div class="intake-strip">${strip}</div>
+    </div>`;
 
   const recent   = [...allWeights].reverse().slice(0, 10);
   const histRows = recent.map((w, i) => {
@@ -2077,6 +2755,7 @@ function renderWeight() {
   }).join('');
 
   container.innerHTML = `
+    ${gainHeader}
     <div class="weight-entry-card">
       <div class="weight-entry-title">Log Weight</div>
       <div class="weight-entry-date">${dateLabel}</div>
