@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=3');
+    navigator.serviceWorker.register('sw.js?v=4');
   }
 </script>
 <style>
@@ -28,6 +28,69 @@
   --border:   #3a3a3c;
   --radius:   14px;
 }
+
+/* ── Morning posture block (added 2026-08-18) ─────────────────────────────────────────────
+   Deliberately its own card above the workout, and rendered for every day including rest
+   days, because it is a daily habit rather than part of the training programme. Collapsed
+   to a single line once all four are ticked, so it stops taking up space for the rest of
+   the day. */
+.posture-card {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 14px; margin-bottom: 14px;
+}
+.posture-card.done { padding: 10px 14px; border-color: rgba(48,209,88,0.4); }
+.posture-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.posture-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.posture-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.posture-count { font-size: 12px; font-weight: 700; color: var(--sub); }
+.posture-count.done { color: var(--green); }
+.posture-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.posture-row {
+  display: flex; align-items: flex-start; gap: 10px; background: var(--card2);
+  border-radius: 10px; padding: 10px 11px; cursor: pointer;
+}
+.posture-row.ticked { opacity: 0.55; }
+.posture-tick {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800;
+  margin-top: 1px;
+}
+.posture-row.ticked .posture-tick { background: var(--green); border-color: var(--green); color: #0f0f0f; }
+.posture-img {
+  flex: 0 0 auto; width: 54px; height: 54px; border-radius: 9px; object-fit: cover;
+  background: #0f0f0f; border: 1px solid var(--border);
+}
+.posture-img-none {
+  flex: 0 0 auto; width: 54px; height: 54px; border-radius: 9px; background: #0f0f0f;
+  border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center;
+  font-size: 19px; opacity: 0.6;
+}
+.posture-row-text { min-width: 0; }
+.posture-ex-name { font-size: 14px; font-weight: 600; }
+.posture-ex-name .posture-dose { font-weight: 700; color: var(--sub); font-size: 12px; margin-left: 6px; }
+.posture-ex-why { font-size: 11.5px; color: var(--sub); margin-top: 2px; line-height: 1.35; }
+.posture-stage { margin-top: 14px; }
+.posture-stage:first-of-type { margin-top: 12px; }
+.posture-stage-title {
+  font-size: 12.5px; font-weight: 700; letter-spacing: .2px; display: flex; align-items: center; gap: 7px;
+}
+.posture-stage-num {
+  width: 17px; height: 17px; border-radius: 50%; background: var(--card2); color: var(--sub);
+  font-size: 10.5px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex: 0 0 auto;
+}
+.posture-stage-note { font-size: 11.5px; color: var(--sub); margin: 4px 0 0 24px; line-height: 1.4; }
+.posture-stage .posture-list { margin-top: 8px; }
+.posture-opt {
+  font-size: 10px; font-weight: 700; color: var(--sub); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; margin-left: 6px;
+  vertical-align: 1px; white-space: nowrap;
+}
+.posture-habit {
+  font-size: 11.5px; color: var(--sub); line-height: 1.4; margin-top: 14px;
+  border-top: 1px solid var(--border); padding-top: 11px;
+}
+.posture-streak { font-size: 11.5px; color: var(--sub); margin-top: 10px; text-align: center; }
 
 body {
   background: var(--bg);
@@ -862,6 +925,7 @@ body {
   <div id="fuelStrip" class="fuel-strip" onclick="switchTab('weight')"></div>
 
   <div class="view active" id="view-today">
+    <div id="postureContent"></div>
     <div id="todayContent"></div>
   </div>
 
@@ -909,7 +973,7 @@ body {
       </svg>
       Graphs
     </button>
-    <button class="nav-btn" id="nav-recipes" onclick="switchTab('recipes')">
+    <button class="nav-btn" id="nav-recipes" onclick="switchTab('recipes')" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M18 8a6 6 0 0 1-7.743 5.743L10 14l-6 6-2-2 6-6 .257-.257A6 6 0 1 1 18 8z"/>
         <path d="M18 8h.01"/>
@@ -1050,6 +1114,8 @@ let allWeights  = [];
 let weekPlans   = {};   // mondayStr -> { dow: workoutName|null, ... }
 let allCardio   = [];   // { date, type ('Swim'|'Run'), duration (mins) }
 let allNutrition = {};  // { 'YYYY-MM-DD': { date, kcal, protein, entries: [{name,kcal,protein}], note } }
+let allPosture  = {};   // { 'YYYY-MM-DD': { date, done: [exercise names] } }  (morning posture block)
+let postureOpen = false; // whether the posture card is expanded after being completed
 let allRecipes   = [];  // { _id, name, kcal, protein, method }
 const extraSets = {};
 let selectedDate          = todayStr;
@@ -1375,7 +1441,7 @@ function checkWorkoutComplete() {
   // forget the calories owed. So the banner that already interrupts you gets a third
   // stat: what's left to eat today, using the same number as the fuel strip.
   const short = KCAL_TARGET - dayNutrition(todayStr).kcal;
-  const fuelHtml = `
+  const fuelHtml = !NUTRITION_ENABLED ? '' : `
     <div class="complete-banner-stat">
       <div class="complete-banner-stat-val" style="color:${short > 0 ? '#fff' : 'var(--green)'}">${short > 0 ? short.toLocaleString() : '✓'}</div>
       <div class="complete-banner-stat-lbl">${short > 0 ? 'cal still owed' : 'cal hit'}</div>
@@ -1496,7 +1562,8 @@ auth.onAuthStateChanged(async user => {
     await loadWeekPlans();
     await loadCardio();
     await loadNutrition();
-    await loadRecipes();
+    await loadPosture();
+    if (NUTRITION_ENABLED) await loadRecipes();
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('signin-screen').style.display  = 'none';
     document.getElementById('app').style.display = 'block';
@@ -1552,6 +1619,125 @@ function getLogs() { return allLogs; }
 function userCardio() {
   return db.collection('users').doc(currentUser.uid).collection('cardio');
 }
+
+// ── Morning posture (added 2026-08-18) ────────────────────────────────────────────────────
+// Separate collection, separate from `logs`, because this is not training volume and should
+// never land in the workout history, the graphs or the progressive-overload nudge.
+// One doc per day: { date, done: [exercise names] }
+function userPosture() {
+  return db.collection('users').doc(currentUser.uid).collection('posture');
+}
+
+async function loadPosture() {
+  const snap = await userPosture().get();
+  allPosture = {};
+  snap.docs.forEach(d => { allPosture[d.id] = d.data(); });
+}
+
+async function togglePosture(name) {
+  const rec  = allPosture[todayStr] || { date: todayStr, done: [] };
+  const done = new Set(rec.done || []);
+  done.has(name) ? done.delete(name) : done.add(name);
+  rec.done = [...done];
+  allPosture[todayStr] = rec;
+  renderPosture();
+  if (navigator.vibrate) navigator.vibrate(10);
+  await userPosture().doc(todayStr).set(rec);
+}
+window.togglePosture = togglePosture;
+
+function togglePostureOpen() {
+  postureOpen = !postureOpen;
+  renderPosture();
+}
+window.togglePostureOpen = togglePostureOpen;
+
+// Consecutive days, counting back from today, where all four were ticked. Today is allowed
+// to be incomplete without breaking the run, otherwise the streak reads 0 every morning.
+// Counts required items only, so an untickable optional row cannot break the run. Today is
+// allowed to be unfinished without resetting, otherwise it reads 0 every morning before you start.
+function postureDoneCount(ds) {
+  const rec = allPosture[ds];
+  if (!rec) return 0;
+  const done = new Set(rec.done || []);
+  return POSTURE.filter(ex => !ex.optional && done.has(ex.name)).length;
+}
+
+function postureStreak() {
+  let n = 0;
+  for (let i = 0; i < 365; i++) {
+    const ds = new Date(today.getTime() - i * 864e5).toISOString().slice(0, 10);
+    if (postureDoneCount(ds) >= POSTURE_REQUIRED) { n++; continue; }
+    if (i === 0) continue;
+    break;
+  }
+  return n;
+}
+
+function postureThumb(ex) {
+  if (!ex.imgId) return `<div class="posture-img-none" title="no matching photo">\u{1F4CD}</div>`;
+  return `<img class="posture-img" src="${IMG_BASE}${ex.imgId}" alt="${ex.name}" loading="lazy"
+    onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'posture-img-none',textContent:'\u{1F4CD}'}))">`;
+}
+
+function renderPosture() {
+  const el = document.getElementById('postureContent');
+  if (!el) return;
+  // Only ever about today. A posture habit done "for last Tuesday" is not a thing.
+  if (selectedDate !== todayStr) { el.innerHTML = ''; return; }
+
+  const done    = new Set((allPosture[todayStr] || {}).done || []);
+  const count   = postureDoneCount(todayStr);
+  const allDone = count >= POSTURE_REQUIRED;
+  const streak  = postureStreak();
+
+  if (allDone && !postureOpen) {
+    el.innerHTML = `
+      <div class="posture-card done" onclick="togglePostureOpen()">
+        <div class="posture-head">
+          <div class="posture-title">\u{1F9CD} Posture done today \u2713</div>
+          <span class="posture-count done">${streak > 1 ? `${streak}-day run` : `${count}/${POSTURE_REQUIRED}`}</span>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const stages = POSTURE_STAGES.map((st, si) => {
+    const rows = st.items.map(ex => {
+      const ticked = done.has(ex.name);
+      return `
+      <div class="posture-row ${ticked ? 'ticked' : ''}" onclick="togglePosture('${ex.name.replace(/'/g, "\'")}')">
+        <div class="posture-tick">${ticked ? '\u2713' : ''}</div>
+        ${postureThumb(ex)}
+        <div class="posture-row-text">
+          <div class="posture-ex-name">${ex.name}<span class="posture-dose">${ex.dose}</span>${ex.optional ? '<span class="posture-opt">optional</span>' : ''}</div>
+          <div class="posture-ex-why">${ex.why}</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="posture-stage">
+        <div class="posture-stage-title"><span class="posture-stage-num">${si + 1}</span>${st.title}</div>
+        <div class="posture-stage-note">${st.note}</div>
+        <div class="posture-list">${rows}</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="posture-card">
+      <div class="posture-head" onclick="togglePostureOpen()">
+        <div>
+          <div class="posture-title">\u{1F9CD} Morning posture</div>
+          <div class="posture-sub">Band, door frame, floor \u00b7 about 10 minutes \u00b7 in order</div>
+        </div>
+        <span class="posture-count ${allDone ? 'done' : ''}">${count}/${POSTURE_REQUIRED}</span>
+      </div>
+      ${stages}
+      <div class="posture-habit">${POSTURE_HABIT}</div>
+      ${streak > 1 ? `<div class="posture-streak">${streak} days in a row</div>` : ''}
+    </div>`;
+}
+window.renderPosture = renderPosture;
 
 async function loadCardio() {
   const snap = await userCardio().get();
@@ -1900,6 +2086,7 @@ function switchTab(tab) {
 function renderFuelStrip() {
   const el = document.getElementById('fuelStrip');
   if (!el) return;
+  if (!NUTRITION_ENABLED) { el.style.display = 'none'; el.innerHTML = ''; return; }
   const day = dayNutrition(todayStr);
   const kcalPct = Math.min(100, Math.round((day.kcal / KCAL_TARGET) * 100));
   const short    = KCAL_TARGET - day.kcal;
@@ -1918,6 +2105,10 @@ function renderToday() {
   const dateStr = selDateObj.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
   document.getElementById('todayDate').textContent = dateStr;
 
+  // Posture block sits above the workout and is rendered for every day, rest days included,
+  // since it is a daily habit rather than part of the session. It hides itself on past dates.
+  renderPosture();
+
   if (!workout) {
     document.getElementById('workoutTitle').textContent = 'Rest Day';
     // Rest days have no post-workout hunger cue, which makes them the easiest day to
@@ -1931,7 +2122,7 @@ function renderToday() {
         <div class="emoji">😴</div>
         <h2>Recovery Day</h2>
         <p>Rest is where the gains happen. No training cue to eat today, so it's on you.</p>
-        ${isToday ? `<div class="rest-fuel-note">${short > 0
+        ${isToday && NUTRITION_ENABLED ? `<div class="rest-fuel-note">${short > 0
             ? `<strong>${short} cal</strong> still needed today` : 'Calories hit for today ✓'}</div>` : ''}
       </div>`;
     return;
@@ -2180,7 +2371,7 @@ function renderHistory() {
   const logs      = getLogs();
   const container = document.getElementById('historyContent');
 
-  const hasNotes = Object.values(allNutrition).some(n => n.note && n.note.trim());
+  const hasNotes = NUTRITION_ENABLED && Object.values(allNutrition).some(n => n.note && n.note.trim());
   if (!logs.length && !allCardio.length && !hasNotes) {
     container.innerHTML = `
       <div class="history-empty">
@@ -2203,7 +2394,7 @@ function renderHistory() {
   // A day with a symptom note but no workout (a rest day, or a day skipped) still needs to
   // appear here. The point of History for the intolerance investigation is being able to
   // scan several days of food + how-it-felt in a row, not just today's.
-  Object.values(allNutrition).forEach(n => {
+  if (NUTRITION_ENABLED) Object.values(allNutrition).forEach(n => {
     if (n.note && n.note.trim()) {
       if (!byDate[n.date]) byDate[n.date] = { gym: {}, cardio: null };
     }
@@ -2269,7 +2460,7 @@ function renderHistory() {
     }
 
     // Food + how-it-felt, shown together on purpose. See saveDayNoteUI for why.
-    const nutriDay = allNutrition[date];
+    const nutriDay = NUTRITION_ENABLED ? allNutrition[date] : null;
     if (nutriDay && ((nutriDay.entries || []).length || (nutriDay.note && nutriDay.note.trim()))) {
       const foodList = (nutriDay.entries || []).map(e => e.name).join(', ');
       sessionHtml += `
@@ -2450,6 +2641,58 @@ function doSwap(el) {
 const WEIGHT_START = 63;
 const WEIGHT_GOAL  = 70;
 
+// Nutrition tracking is PAUSED (2026-08-18). Alex is using MyFitnessPal for food, so every
+// food/calorie surface is gated off behind this one flag rather than deleted: flip it back to
+// true to restore the fuel strip, the Gain tab's food cards, the Recipes tab and the daily note.
+// Weight, trend, rate, projection and all workout tracking are unaffected.
+// ── Morning posture block (added 2026-08-18) ───────────────────────────────────────────────
+// Four band exercises for desk posture, done daily in the morning, deliberately kept OUT of
+// the WORKOUTS object: this is low-load daily habit work, not training volume, and mixing it
+// into a session would corrupt the volume totals and the overload nudge. Selection targets the
+// four things that actually go wrong sitting at a desk, with no duplication between them:
+// rounded shoulders, internally rotated shoulders, a stiff/flexed thoracic spine, forward head.
+const POSTURE_STAGES = [
+  {
+    title: 'Mobilise the thoracic spine',
+    note:  'This comes first, and not at the shoulders. A restricted mid-back is what drags the shoulders forward.',
+    items: [
+      { name: 'Prone Roll-Back', dose: '5 each side', imgId: null,
+        why: 'Face down, arms stretched overhead at about 45 degrees. Roll backwards onto one side and let the arms stay high. Rotates the thoracic spine and moves it into extension at the same time.' },
+      { name: 'Foam Roller Extension', dose: '60 sec', imgId: 'Rhomboids-SMR/0.jpg', optional: true,
+        why: 'On your back, roller under the shoulder blades, a med ball or plate held on your chest. The extra weight forces the mid-back into extension over the roller.' },
+    ],
+  },
+  {
+    title: 'Stretch what is tight',
+    note:  'Upper cross syndrome. The pec minor and subscapularis are the tight ones. Worth repeating a few times a day, not only now.',
+    items: [
+      { name: 'Doorway Slide', dose: '30-45 sec each side', imgId: null,
+        why: 'Front of the shoulder against the door frame so the frame pushes the shoulder blade back. Retract both blades together, then slide that hand up the frame.' },
+      { name: "Pitcher's Stretch", dose: '30-45 sec each side', imgId: null,
+        why: 'Take up the position of a pitcher about to throw, arm back and elbow bent, and let the front of the shoulder open out. Same muscles as the doorway stretch from a different angle.' },
+    ],
+  },
+  {
+    title: 'Strengthen what is weak',
+    note:  'Mid-back and lower traps. Every rep slow and deliberate. Think 10 sets of 1 rather than 1 set of 10.',
+    items: [
+      { name: 'Band Face Pull to Overhead', dose: '2 x 10 slow', imgId: 'Face_Pull/0.jpg',
+        why: 'Anchor at chin height. Drive with the backs of the hands, elbows held at 90 degrees, band to your face. Then raise the arms slowly overhead to hit the lower traps, hold a second, and reverse it.' },
+      { name: 'High-to-Low Band Pull-Apart', dose: '2 x 10 slow', imgId: 'Band_Pull_Apart/0.jpg',
+        why: 'Anchor high, pull down and apart, externally rotating as you go so the thumbs finish pointing away from each other.' },
+    ],
+  },
+];
+
+// Flattened for ticking and counting. `optional` items (kit Alex may not own) are excluded from the
+// completion target, otherwise a missing foam roller would make 100% unreachable and kill the streak.
+const POSTURE = POSTURE_STAGES.flatMap(st => st.items);
+const POSTURE_REQUIRED = POSTURE.filter(ex => !ex.optional).length;
+
+// All-day habit, not a morning rep, so it renders as a footer note rather than a tickable row.
+const POSTURE_HABIT = 'Desk habit: sit with a tennis or lacrosse ball between your shoulder blades. If the shoulders start to round, it drops down your back.';
+
+const NUTRITION_ENABLED = false;
 const KCAL_TARGET    = 3350;
 const PROTEIN_TARGET = 139;
 const RATE_MIN       = 0.6;    // kg/week, the plan's target band
@@ -2667,8 +2910,9 @@ function renderGain() {
           projection.reached ? 'Goal reached. Time to decide what is next.'
         : projection.tooSlow ? `At this rate ${WEIGHT_GOAL} kg is over a year away. The rate is the thing to fix, not the patience.`
         : `At this rate, ${WEIGHT_GOAL} kg around <strong>${projection.date}</strong> (${projection.weeks} weeks)`}</div>` : ''}
-    </div>
+    </div>`;
 
+  const nutritionCards = !NUTRITION_ENABLED ? '' : `
     <div class="fuel-card">
       <div class="weight-section-title" style="margin-bottom:6px">Maintenance check</div>
       ${calib.ready ? `
@@ -2738,6 +2982,7 @@ function renderGain() {
       <div class="intake-strip">${strip}</div>
     </div>`;
 
+
   const recent   = [...allWeights].reverse().slice(0, 10);
   const histRows = recent.map((w, i) => {
     const prev    = recent[i + 1];
@@ -2756,6 +3001,7 @@ function renderGain() {
 
   container.innerHTML = `
     ${gainHeader}
+    ${nutritionCards}
     <div class="weight-entry-card">
       <div class="weight-entry-title">Log Weight</div>
       <div class="weight-entry-date">${dateLabel}</div>
