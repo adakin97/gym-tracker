@@ -6,8 +6,10 @@
 
 ## Pick up here (next session)
 
-**2026-08-18 session: nutrition paused, morning posture block added. Changed locally, NOT committed or
-pushed** (Alex said deployment can wait), so the live site is still the 14 Aug build.
+**2026-08-18 session: nutrition paused, morning posture block added. SHIPPED.** Committed (`097d645`) and
+pushed to `main`; GitHub Pages reported the build as `built` and the deployed `index.html` and `sw.js` were
+fetched back to confirm they carry `POSTURE_STAGES`, `NUTRITION_ENABLED = false` and `gym-v4`, rather than
+assuming the push landed. Live at adakin97.github.io/gym-tracker.
 
 **1. Nutrition tracking is paused behind one flag, not deleted.** Alex is using MyFitnessPal for food, so
 every calorie surface is gated off `const NUTRITION_ENABLED = false;` (declared just above `KCAL_TARGET`).
@@ -95,7 +97,7 @@ Smoothie, Chocolate Avocado Flaxseed, Chocolate PB Greek Yogurt, Coffee Whey —
 roundup, filtered to whey-only (no new protein powders to buy). Confirmed Google sign-in and a live
 Firestore write both work from a desktop Chrome session — **still not verified on an actual phone.**
 
-**State: LIVE.** Committed (`4ebf6a1`) and pushed to `main` on 2026-08-14 evening. GitHub Pages rebuilds
+**State: LIVE**, now at `097d645` (18 Aug). The note below describes the previous `4ebf6a1` shipment and is kept for history. Committed (`4ebf6a1`) and pushed to `main` on 2026-08-14 evening. GitHub Pages rebuilds
 from `main`, so adakin97.github.io/gym-tracker is now running everything below rather than the 4 May
 version. Firestore rules confirmed as a genuine `users/{uid}/{document=**}` wildcard, so `nutrition` and
 `recipes` are already covered, no rule change was needed. Service worker cache bumped `gym-v2` → `gym-v3`
@@ -174,14 +176,19 @@ Section 6 of the research brief, rather than waiting on an NHS GP referral. Wort
 
 **First things next session, in order:**
 
-1. **Verify signed in on the phone** — the one item that never got checked before shipping (see the LIVE
-   note at the top).
-2. **Log real food and weigh-ins for a couple of weeks**, so the maintenance-calibration card and the
-   trend/rate leave their "not enough data yet" states and start saying something real.
-3. **Blood test outcome** — Alex is getting a private thyroid + coeliac panel done (~£60-80, Medichecks or
+1. **Did the posture card actually appear on the phone, and did ticking a row save?** This is now the
+   phone-verification item and the Firestore-write item in one: ticking a posture row is a real write to a
+   brand-new collection, so if it persists across an app reload, both long-standing open questions are
+   answered at once. Expect the phone to serve the cached build once before `gym-v4` takes over.
+2. **Does Alex own a foam roller, a med ball and a tennis or lacrosse ball?** Unknown, and it decides
+   whether the optional roller drill and the desk-habit note are usable as written. Ask rather than assume.
+3. **Weigh-ins only for the trend to become real.** Food logging now lives in MyFitnessPal, so the
+   maintenance-calibration card is dormant behind the flag; the trend and rate still need a couple of weeks
+   of weigh-ins to leave their "not enough data yet" states.
+4. **Blood test outcome** — Alex is getting a private thyroid + coeliac panel done (~£60-80, Medichecks or
    similar) per Section 6 of the hardgainer research brief. Worth checking back on this; a real finding
    there would outrank everything else in the ranked list.
-4. **Read back the hardgainer research** (`../Hardgainer-Research-2026-08-14.md`) once there's real data
+5. **Read back the hardgainer research** (`../Hardgainer-Research-2026-08-14.md`) once there's real data
    to weigh it against, and decide whether the training program (`WORKOUTS`) needs changing at all — the
    brief's own conclusion is that it's very unlikely to be the primary cause, so don't revise it
    speculatively before the intake and medical questions are further along.
@@ -400,7 +407,7 @@ const WEIGHT_GOAL = 70;  // kg — used for body weight graph goal line
 
 | Date | Changes |
 |------|---------|
-| 2026-08-18 | **Nutrition paused behind `NUTRITION_ENABLED = false`** (Alex moved to MyFitnessPal): fuel strip, Gain-tab food cards, Recipes tab, rest-day and complete-banner calorie stats, and History food/note cards all gated off rather than deleted; recipe seeding skipped so nothing writes to Firestore while paused; no Firestore data removed. **Added the morning posture block, built to the AthleanX rounded-shoulders protocol Alex supplied**: three ordered stages (mobilise the thoracic spine, stretch pec minor/subscapularis, strengthen mid-back and lower traps), six items of which the foam-roller drill is optional and excluded from the 5/5 target so a missing roller cannot kill the streak, plus the tennis-ball desk habit as a footer note. Kept out of `WORKOUTS` so it never enters training volume. Tick-off, collapse-when-done, streak that tolerates an unfinished today. An earlier four-exercise version from the same session was superseded by the protocol. New collection `users/{uid}/posture/{date}`. Each row carries a 54px thumbnail from free-exercise-db where an honest match exists (`Rhomboids-SMR`, `Face_Pull`, `Band_Pull_Apart`, 3 of 6); the prone roll-back, doorway slide and pitcher's stretch have no match in the database and render a dashed placeholder, which is also the `onerror` fallback. Service worker bumped `gym-v3` → `gym-v4`. Logic unit-tested; card states screenshotted in-browser including the loaded thumbnails. **Not committed or pushed.** |
+| 2026-08-18 | **Nutrition paused behind `NUTRITION_ENABLED = false`** (Alex moved to MyFitnessPal): fuel strip, Gain-tab food cards, Recipes tab, rest-day and complete-banner calorie stats, and History food/note cards all gated off rather than deleted; recipe seeding skipped so nothing writes to Firestore while paused; no Firestore data removed. **Added the morning posture block, built to the AthleanX rounded-shoulders protocol Alex supplied**: three ordered stages (mobilise the thoracic spine, stretch pec minor/subscapularis, strengthen mid-back and lower traps), six items of which the foam-roller drill is optional and excluded from the 5/5 target so a missing roller cannot kill the streak, plus the tennis-ball desk habit as a footer note. Kept out of `WORKOUTS` so it never enters training volume. Tick-off, collapse-when-done, streak that tolerates an unfinished today. An earlier four-exercise version from the same session was superseded by the protocol. New collection `users/{uid}/posture/{date}`. Each row carries a 54px thumbnail from free-exercise-db where an honest match exists (`Rhomboids-SMR`, `Face_Pull`, `Band_Pull_Apart`, 3 of 6); the prone roll-back, doorway slide and pitcher's stretch have no match in the database and render a dashed placeholder, which is also the `onerror` fallback. Service worker bumped `gym-v3` → `gym-v4`. Logic unit-tested; card states screenshotted in-browser including the loaded thumbnails. **Shipped: committed `097d645`, pushed to `main`, Pages build confirmed `built` and the deployed files fetched back to verify.** |
 | 2026-08-14 | **Shipped.** Committed `4ebf6a1` and pushed to `main`; live at adakin97.github.io/gym-tracker. Confirmed the Firestore rules are a genuine `users/{uid}/{document=**}` wildcard (Alex pasted them from the console), so `nutrition` and `recipes` needed no rule change. Service worker cache bumped `gym-v2` → `gym-v3` in both `sw.js` and the `index.html` registration string, so phones stop serving the stale cached build. This is the two-session Gain-tab/hardgainer rebuild described above going live for the first time. |
 | 2026-02-26 | Initial build: PWA, Firebase auth, exercise cards, per-set logging, history view (localStorage at first) |
 | 2026-02-26 | Migrated to Firestore; bodyweight tracker tab added |
