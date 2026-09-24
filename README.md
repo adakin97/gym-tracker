@@ -8,33 +8,31 @@ A mobile workout tracking app built as a Progressive Web App (PWA), accessible v
 
 ## Features
 
-- **Today's workout** — automatically shows the correct session based on the day of the week
-- **Exercise cards** — image, muscle group, sets/reps targets, tempo and rest times
-- **Set logging** — log weight (kg) and reps for each set with a single tap
-- **Previous best** — shows your best weight from the last time you did each exercise
-- **Progress bar** — tracks how many sets you've completed per exercise
-- **History** — full log of every past session, expandable by exercise and set
-- **Rest day screen** — shown on Wednesday, Friday and Sunday
+- **Today's workout**: the planned session for the day, replannable per week
+- **Exercise cards**: image, muscle group, sets/reps targets and rest times
+- **Double progression**: last session's sets and whether to go up, hold or drop; suggested weight pre-filled
+- **Set feedback**: flags a set that falls under or well over the rep range
+- **This week**: sessions done out of 3, streak, days since last session, sets per muscle vs the plan
+- **Morning weigh-in** prompt and a Gain tab with 7-day trend and rate of gain
+- **Graphs**: estimated 1-rep max per lift, 8-week lift trends, body weight with trend line
+- **History**: full log of every past session
 
 ---
 
-## Training Schedule
+## Training Schedule (from 24 Sep 2026)
 
-| Day | Session | Focus |
-|-----|---------|-------|
-| Monday | Upper A | Strength (6-8 reps) |
-| Tuesday | Lower A | Strength (6-8 reps) |
-| Wednesday | Rest | — |
-| Thursday | Upper B | Hypertrophy (10-15 reps) |
-| Friday | Rest | — |
-| Saturday | Lower B | Hypertrophy (12-20 reps) |
-| Sunday | Rest | — |
+| Day | Session |
+|-----|---------|
+| Monday | Full Body A |
+| Wednesday | Full Body B |
+| Friday | Full Body C |
+| Other days | Rest (any session can be moved) |
 
 ---
 
 ## Data Storage
 
-All workout logs are saved to **localStorage** on your device. No account or internet connection required after the initial page load. Data persists between sessions.
+Data is stored in Firebase Firestore under your Google account, so it syncs across devices.
 
 ---
 
@@ -49,6 +47,6 @@ All workout logs are saved to **localStorage** on your device. No account or int
 ## Profile
 
 - **Name:** Alexander Dakin
-- **Goal:** 63 kg → 70 kg (muscle gain)
-- **Program:** 4-day Upper/Lower split
+- **Goal:** 63 kg → 75 kg (muscle gain)
+- **Program:** 3-day full body (A/B/C)
 - **Daily calories:** 3,350 kcal | 139g protein | 557g carbs | 63g fats

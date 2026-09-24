@@ -1,10 +1,58 @@
 # Gym Tracker App — Context
 
-> **Last updated:** 2026-08-18
+> **Last updated:** 2026-09-24
 
 ---
 
 ## Pick up here (next session)
+
+**2026-09-24 session: programme replaced, progression/consistency rebuilt. SHIPPED.** Driven by a review of
+all 595 logged sets (full write-up: `../Training-Review-2026-09-24.md`). Finding: real progress 16 Mar-28 Apr
+at 3.5 sessions/wk, then flat or regressing on nearly every lift as sessions fell below 1/wk; only 13 leg sets
+after 25 Apr (Lower B done once, ever); bodyweight flat at 67-68 kg since April. What changed:
+
+1. **3-day full body replaces Upper/Lower.** `WORKOUTS` keys 1/3/5 = Full Body A/B/C (Mon/Wed/Fri default),
+   `SESSIONS_PER_WEEK = 3`. Every session trains legs + push + pull, so a missed day never zeroes a muscle.
+   Old split kept as `LEGACY_WORKOUTS` (never offered; used so past dates open as what was done, and its lifts
+   stay swappable). `findWorkout(name)` resolves current then legacy. **A week plan saved for this week or later
+   that still holds old names is treated as stale in full** (`getWeekPlan`, `PROGRAMME_START = '2026-09-21'`):
+   mapping it day by day put its rest days on the new Mon/Wed/Fri and collapsed the week to one session.
+2. **Double progression replaces the +2.5 kg nudge** (`suggestLoad`). Per exercise: last session's sets
+   (`formatSets`, e.g. `18 x 8, 8 · 20 x 8`) and one instruction: go up (all sets at one weight hit the top of
+   the range), hold and add reps, or drop (top load fell under the range). Step size by equipment
+   (`loadStep`): 1 kg light DBs, 2 kg DBs, 2.5 cable/barbell, 5 heavy machines, 7 or 5 for the assisted pull-up
+   stack. Assisted pull-ups (`ASSISTED`) invert everything. The suggested weight is the placeholder in empty
+   weight boxes and is used if the box is left empty, so a set is reps + one tap. **Reps are now required** to log.
+3. **Live set feedback** (`setFeedback`, `applySetFeedback`): a set under the range shows "drop to X kg for the
+   next set"; well over it says go up; the load carries into the empty rows below.
+4. **Return-from-break** inside `suggestLoad`: 10+ days since that exercise -> ~90%, 28+ days -> ~80%, rounded to a
+   real step and always at least one step below. `BREAK_DAYS = 10`.
+5. **Today tab additions** (today only, hidden on past dates): morning weigh-in prompt (`renderWeighIn`,
+   `#weighinContent`, shares `saveTodayWeight` with the Gain tab); "This week" card (`renderWeekCard`,
+   `#weekContent`): session dots x/3, weekly streak (`weekStreak`, current week never breaks it), days since last
+   session (amber 4+, red 10+), and **sets per muscle** this week vs the plan plus a 4-week weekly average,
+   counted fractionally (`setContribution`: presses give 0.5 to triceps, rows/pulldowns 0.5 to biceps;
+   `PLANNED_COVERAGE` is computed from `WORKOUTS` with the same rule). Rest days show a **"Train now: <next in
+   A/B/C rotation>"** button when the week is behind (`nextInRotation`).
+6. **Graphs:** exercise chart now plots **estimated 1RM (Epley)** per session, not max weight (assisted pull-ups
+   plot least assistance). New "Lift trends · last 8 weeks" card (`liftTrend`, within 3% = flat). Charts use a
+   date-based x axis; bodyweight charts draw the 7-day trend line.
+7. **Gain tab:** `RATE_MIN/MAX` 0.6-0.8 -> **0.2-0.35 kg/wk** (Iraki 2019, Helms 2023); `WEIGHT_GOAL` 70 -> **75**.
+8. Removed tempo from exercise cards; plank is gone with the old split. `extraSets` now clears on date/workout
+   change (it leaked between sessions), rows added with + Add Set survive a re-render, and `addSet` finds its
+   button by id rather than `nth-child` (which broke once cards were added above the workout).
+
+Service worker `gym-v4` -> `gym-v5`. **Verified** in a local harness: real `index.html` with Firebase stubbed and
+seeded with all 595 real sets (transcribed from the live export, totals checked against it): logic tests
+(progression cases, assisted inversion, break loads, feedback, streak, rotation, stale plan, e1RM) all pass; a full
+Full Body A session logged end to end (completion banner, week card, History, Graphs, Gain all render); phone-width
+screenshots checked; no console errors. **Not tested against real Firestore or on the phone.**
+
+**Open:** Machine Deadlift stands in for an RDL on Full Body B because the RDL was swapped out in March on
+real-world feedback; swap back if the gym setup allows. Nutrition still paused behind `NUTRITION_ENABLED`.
+
+---
+
 
 **2026-08-18 session: nutrition paused, morning posture block added. SHIPPED.** Committed (`097d645`) and
 pushed to `main`; GitHub Pages reported the build as `built` and the deployed `index.html` and `sw.js` were
@@ -316,34 +364,27 @@ Functions: `loadRecipes()`, `addRecipeUI()`, `deleteRecipe()`, `logRecipe()`, `r
 
 ```js
 const WORKOUTS = {
-  1: { name: 'Upper A', focus: 'Strength',    exercises: [...] },  // Monday
-  2: { name: 'Lower A', focus: 'Strength',    exercises: [...] },  // Tuesday
-  4: { name: 'Upper B', focus: 'Hypertrophy', exercises: [...] },  // Thursday
-  6: { name: 'Lower B', focus: 'Hypertrophy', exercises: [...] },  // Saturday
+  1: { name: 'Full Body A', short: 'Full A', focus: 'Full body', exercises: [...] },  // Monday
+  3: { name: 'Full Body B', short: 'Full B', focus: 'Full body', exercises: [...] },  // Wednesday
+  5: { name: 'Full Body C', short: 'Full C', focus: 'Full body', exercises: [...] },  // Friday
 };
+const LEGACY_WORKOUTS = [ /* Upper A, Lower A, Upper B, Lower B: March-September 2026 */ ];
 ```
 
-Each exercise: `{ name, muscle, sets, reps, tempo, rest, imgId }`
+Each exercise: `{ name, muscle, sets, reps, rest, imgId }` (tempo dropped 2026-09-24). `short` is the date-pill label.
 
-**Current exercise lists (5 per session as of 2026-05-04):**
+**Current programme (from 2026-09-24):**
 
-| Upper A (Strength) | Upper B (Hypertrophy) |
-|---|---|
-| Barbell Bench Press 4×6-8 (120s) | Incline Dumbbell Press 4×10-12 (90s) |
-| T-Bar Rows 4×6-8 (120s) | Lat Pulldown 4×10-12 (90s) |
-| Dumbbell Shoulder Press 3×6-8 (90s) | Dumbbell Shoulder Press 3×10-12 (90s) |
-| Pull-ups 3×6-8 (90s) | Face Pulls 3×15-20 (60s) |
-| Dumbbell Curl 3×8-10 (60s) | Cable Tricep Pushdowns 3×12-15 (60s) |
+| Full Body A | Full Body B | Full Body C |
+|---|---|---|
+| Leg Press 3x8-12 (180s) | Machine Deadlift 3x8-10 (180s) | Bulgarian Split Squats 3x8-12 (150s) |
+| Incline Dumbbell Press 3x8-12 (150s) | Dumbbell Bench Press 3x8-12 (150s) | Dumbbell Shoulder Press 3x8-12 (150s) |
+| Lat Pulldown 3x8-12 (150s) | Seated Cable Rows 3x8-12 (150s) | Pull-ups (assisted) 3x6-10 (150s) |
+| Side Lateral Raise 3x12-20 (90s) | Seated Leg Curl 3x10-15 (90s) | Leg Extensions 2x12-15 (90s) |
+| Overhead Cable Triceps Extension 2x10-15 (90s) | Incline Dumbbell Curl 3x10-15 (90s) | Side Lateral Raise 2x12-20 (90s) |
+| | | Cable Tricep Pushdowns 2x10-15 (90s) |
 
-| Lower A (Strength) | Lower B (Hypertrophy) |
-|---|---|
-| Barbell Squat 4×6-8 (120s) | Deadlift 4×6-8 (120s) |
-| Machine Deadlift 4×6-8 (120s) | Bulgarian Split Squats 3×10-12 (90s) |
-| Static Lunges 3×10-12 (60s) | Leg Curls 3×12-15 (60s) |
-| Calf Raises 4×12-15 (45s) | Leg Press 3×15-20 (90s) |
-| Plank 3×45s (45s) | Calf Raises 4×15-20 (45s) |
-
-Rest values in brackets are the configured rest timer durations.
+Planned fractional sets/week: Quads 8, Hamstrings 6, Chest 6, Back 9, Shoulders 8, Biceps 7.5, Triceps 8.5.
 
 ### Exercise Library
 
@@ -357,9 +398,10 @@ Rest values in brackets are the configured rest timer durations.
 
 Exercises in `['Plank', 'Hanging Leg Raises', 'Dead Bug']` are flagged as `noWeight`: weight input is hidden (sends 0), previous best / overload nudge hidden. Plank uses "mins" label instead of "reps". Note: Hanging Leg Raises and Dead Bug were removed from Lower B in session 22 (May 2026); only Plank remains in active workouts.
 
-### Overload Nudge
+### Progression (replaced the overload nudge 2026-09-24)
 
-Pull-ups use reversed overload logic (`prev.weight - 2.5` instead of `+ 2.5`) since they use an assisted machine where lower weight = harder.
+`suggestLoad(ex)` does double progression; see "Pick up here". Pull-ups are in `ASSISTED`, so lower weight = harder
+throughout (suggestions, feedback, trends, charts).
 
 ---
 
@@ -386,7 +428,9 @@ Pull-ups use reversed overload logic (`prev.weight - 2.5` instead of `+ 2.5`) si
 ## Constants
 
 ```js
-const WEIGHT_GOAL = 70;  // kg — used for body weight graph goal line
+const WEIGHT_GOAL = 75;                  // kg (was 70 until 2026-09-24)
+const RATE_MIN = 0.2, RATE_MAX = 0.35;   // kg/week target band (was 0.6-0.8)
+const SESSIONS_PER_WEEK = 3, BREAK_DAYS = 10, PROGRAMME_START = '2026-09-21';
 ```
 
 ---
@@ -407,6 +451,7 @@ const WEIGHT_GOAL = 70;  // kg — used for body weight graph goal line
 
 | Date | Changes |
 |------|---------|
+| 2026-09-24 | **Programme and progression rebuilt from a 6-month log review.** 3-day full body (A/B/C, Mon/Wed/Fri) replaces Upper/Lower, old split kept as `LEGACY_WORKOUTS` for past dates; stale old-split week plans ignored. Double progression (`suggestLoad`) replaces the +2.5 kg nudge; live too-heavy/too-light set feedback; return-from-break loads; reps required to log. Today tab: weigh-in prompt, This-week card (x/3, streak, days since last session, fractional sets per muscle vs plan and 4-week avg), catch-up "Train now" button on behind rest days. Graphs: e1RM, lift trends, date-based x, trend line. Gain: 0.2-0.35 kg/wk band, goal 75 kg. Tempo removed. Fixes: `extraSets` leak, added rows lost on re-render, `nth-child` addSet lookup. SW `gym-v5`. Verified in a stubbed harness seeded with all 595 real sets; not on phone. |
 | 2026-08-18 | **Nutrition paused behind `NUTRITION_ENABLED = false`** (Alex moved to MyFitnessPal): fuel strip, Gain-tab food cards, Recipes tab, rest-day and complete-banner calorie stats, and History food/note cards all gated off rather than deleted; recipe seeding skipped so nothing writes to Firestore while paused; no Firestore data removed. **Added the morning posture block, built to the AthleanX rounded-shoulders protocol Alex supplied**: three ordered stages (mobilise the thoracic spine, stretch pec minor/subscapularis, strengthen mid-back and lower traps), six items of which the foam-roller drill is optional and excluded from the 5/5 target so a missing roller cannot kill the streak, plus the tennis-ball desk habit as a footer note. Kept out of `WORKOUTS` so it never enters training volume. Tick-off, collapse-when-done, streak that tolerates an unfinished today. An earlier four-exercise version from the same session was superseded by the protocol. New collection `users/{uid}/posture/{date}`. Each row carries a 54px thumbnail from free-exercise-db where an honest match exists (`Rhomboids-SMR`, `Face_Pull`, `Band_Pull_Apart`, 3 of 6); the prone roll-back, doorway slide and pitcher's stretch have no match in the database and render a dashed placeholder, which is also the `onerror` fallback. Service worker bumped `gym-v3` → `gym-v4`. Logic unit-tested; card states screenshotted in-browser including the loaded thumbnails. **Shipped: committed `097d645`, pushed to `main`, Pages build confirmed `built` and the deployed files fetched back to verify.** |
 | 2026-08-14 | **Shipped.** Committed `4ebf6a1` and pushed to `main`; live at adakin97.github.io/gym-tracker. Confirmed the Firestore rules are a genuine `users/{uid}/{document=**}` wildcard (Alex pasted them from the console), so `nutrition` and `recipes` needed no rule change. Service worker cache bumped `gym-v2` → `gym-v3` in both `sw.js` and the `index.html` registration string, so phones stop serving the stale cached build. This is the two-session Gain-tab/hardgainer rebuild described above going live for the first time. |
 | 2026-02-26 | Initial build: PWA, Firebase auth, exercise cards, per-set logging, history view (localStorage at first) |

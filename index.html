@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=4');
+    navigator.serviceWorker.register('sw.js?v=5');
   }
 </script>
 <style>
@@ -369,6 +369,106 @@ body {
   margin-bottom: 12px; display: flex; align-items: center; gap: 5px;
 }
 .prev-best .val { color: var(--green); font-weight: 700; }
+[hidden] { display: none !important; }
+
+/* ── Double progression (added 2026-09-24) ── */
+.prog-box {
+  background: var(--card2); border-radius: 10px; padding: 9px 11px; margin-bottom: 12px;
+  font-size: 12.5px; line-height: 1.4;
+}
+.prog-last { color: var(--sub); }
+.prog-last b { color: var(--text); font-weight: 600; }
+.prog-next { margin-top: 3px; font-weight: 700; }
+.prog-up    { color: var(--green); }
+.prog-same  { color: var(--text); }
+.prog-heavy { color: #ff9f0a; }
+.prog-break { color: #64d2ff; }
+.set-input.has-suggest::placeholder { color: var(--sub); font-weight: 600; font-size: 16px; }
+.set-hint { font-size: 12px; font-weight: 600; margin: 2px 0 4px; line-height: 1.35; }
+.set-hint-heavy { color: #ff9f0a; }
+.set-hint-light { color: var(--green); }
+
+.catchup-note { margin-top: 22px; font-size: 13px; color: var(--sub); }
+.catchup-btn {
+  margin-top: 10px; padding: 13px 18px; width: 100%; max-width: 320px;
+  background: var(--accent); color: #fff; border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.catchup-btn:active { opacity: 0.8; }
+
+/* ── Morning weigh-in prompt (added 2026-09-24) ── */
+.weighin-card {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.weighin-text { flex: 1; min-width: 0; }
+.weighin-title { font-size: 15px; font-weight: 700; }
+.weighin-sub { font-size: 11.5px; color: var(--sub); margin-top: 2px; }
+.weighin-input {
+  width: 72px; background: var(--card2); border: 1.5px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: 17px; font-weight: 700; padding: 8px 6px; text-align: center;
+  -webkit-appearance: none; outline: none;
+}
+.weighin-input:focus { border-color: var(--accent); }
+.weighin-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 700; padding: 10px 14px; cursor: pointer;
+}
+.weighin-done { font-size: 12.5px; color: var(--sub); margin: -4px 2px 12px; }
+.weighin-done b { color: var(--text); }
+
+/* ── This week card (added 2026-09-24) ── */
+.week-card {
+  background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  padding: 14px; margin-bottom: 14px;
+}
+.week-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.week-title { font-size: 15px; font-weight: 700; }
+.week-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.week-count { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.week-dots { display: flex; gap: 4px; }
+.week-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border); }
+.week-dot.on { background: var(--green); border-color: var(--green); }
+.week-gap {
+  margin-top: 10px; font-size: 12.5px; line-height: 1.4; color: #ff9f0a;
+  background: rgba(255,159,10,.1); border-radius: 9px; padding: 8px 10px;
+}
+.week-gap-bad { color: #ff6961; background: rgba(255,59,48,.12); }
+.cov-head, .cov-row {
+  display: grid; grid-template-columns: 78px 1fr 58px 46px; gap: 8px; align-items: center;
+}
+.cov-head {
+  margin: 14px 0 6px; font-size: 10.5px; color: var(--sub); text-transform: uppercase; letter-spacing: .4px;
+}
+.cov-head span:first-child { grid-column: 1 / 3; }
+.cov-head span:nth-child(2), .cov-head span:nth-child(3) { text-align: right; }
+.cov-row { margin-bottom: 5px; }
+.cov-name { font-size: 12.5px; }
+.cov-track { height: 6px; background: var(--card2); border-radius: 4px; overflow: hidden; }
+.cov-fill { height: 100%; background: #64d2ff; border-radius: 4px; }
+.cov-fill.full { background: var(--green); }
+.cov-val { font-size: 12px; color: var(--sub); text-align: right; font-variant-numeric: tabular-nums; }
+.cov-avg { font-size: 12px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.cov-foot { font-size: 11px; color: var(--sub); margin-top: 8px; line-height: 1.4; }
+.cov-ok  { color: var(--green); }
+.cov-mid { color: #ff9f0a; }
+.cov-low { color: #ff6961; }
+
+/* ── Lift trends (Graphs tab, added 2026-09-24) ── */
+.trend-row {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+  padding: 7px 0; border-top: 1px solid rgba(255,255,255,.06); font-size: 13px; cursor: pointer;
+}
+.trend-row:first-of-type { border-top: none; }
+.trend-sessions { font-size: 11px; color: var(--sub); }
+.trend-val { font-weight: 700; font-size: 12.5px; min-width: 64px; text-align: right; }
+.trend-up   { color: var(--green); }
+.trend-flat { color: var(--sub); }
+.trend-down { color: #ff6961; }
+.graph-note { font-size: 11.5px; color: var(--sub); line-height: 1.4; margin: -6px 0 12px; }
+.chart-legend { display: flex; gap: 14px; justify-content: center; margin-top: 6px; font-size: 11px; color: var(--sub); }
+.chart-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
 
 
 /* ── Set logger ── */
@@ -926,6 +1026,8 @@ body {
 
   <div class="view active" id="view-today">
     <div id="postureContent"></div>
+    <div id="weighinContent"></div>
+    <div id="weekContent"></div>
     <div id="todayContent"></div>
   </div>
 
@@ -987,7 +1089,7 @@ body {
   <div class="replan-sheet" onclick="event.stopPropagation()">
     <div class="replan-header">
       <span class="replan-title">Plan this week</span>
-      <span class="replan-count" id="replanCount">0/4 workouts</span>
+      <span class="replan-count" id="replanCount">0/3 workouts</span>
       <button class="swap-close" onclick="closeReplanSheet(null)">✕</button>
     </div>
     <div class="replan-rows" id="replanRows"></div>
@@ -1050,48 +1152,95 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 
 // ── Workout data ──────────────────────────────────────────────────────────────
+// ── Programme (from 2026-09-24): 3-day full body ─────────────────────────────────
+// Replaced the 4-day Upper/Lower split after a review of 6 months of logs (see
+// Gym 2026 Claude/Training-Review-2026-09-24.md). Upper/Lower only works if all four days
+// happen; in practice the lower days were the ones skipped, so legs got 13 sets in five
+// months. Full body puts legs, a push and a pull in every session, so a 2-session week still
+// trains everything. Volume per muscle is what drives growth, not frequency (Pelland 2024),
+// so three sessions lose nothing against four.
+//   - First three lifts are compounds: longer rest (Schoenfeld 2016, 3 min beat 1 min).
+//   - Accessories lean towards the stretched position (Maeo 2023 overhead triceps, seated
+//     leg curl, incline curl), plus lateral raises for shoulder width.
+//   - Progression is double progression, driven by the rep range: see suggestLoad().
+// Keys are the default day of week (Mon/Wed/Fri); any day can still be replanned.
 const WORKOUTS = {
   1: {
-    name: 'Upper A', focus: 'Strength',
+    name: 'Full Body A', short: 'Full A', focus: 'Full body',
     exercises: [
-      { name: 'Barbell Bench Press',    muscle: 'Chest',      sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
-      { name: 'T-Bar Rows',             muscle: 'Back',       sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Bent_Over_Barbell_Row/0.jpg' },
-      { name: 'Dumbbell Shoulder Press',muscle: 'Shoulders',  sets: 3, reps: '6-8',   tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
-      { name: 'Pull-ups',               muscle: 'Back',       sets: 3, reps: '6-8',   tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Pullups/0.jpg' },
-      { name: 'Dumbbell Curl',          muscle: 'Biceps',     sets: 3, reps: '8-10',  tempo: '3-0-1-0', rest: '60 sec',  imgId: 'Dumbbell_Bicep_Curl/0.jpg' },
+      { name: 'Leg Press',                        muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '180 sec', imgId: 'Leg_Press/0.jpg' },
+      { name: 'Incline Dumbbell Press',           muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Incline_Dumbbell_Press/0.jpg' },
+      { name: 'Lat Pulldown',                     muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+      { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+      { name: 'Overhead Cable Triceps Extension', muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Cable_Rope_Overhead_Triceps_Extension/0.jpg' },
     ]
   },
-  2: {
-    name: 'Lower A', focus: 'Strength',
+  3: {
+    name: 'Full Body B', short: 'Full B', focus: 'Full body',
     exercises: [
-      { name: 'Barbell Squat',          muscle: 'Quads',      sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Barbell_Squat/0.jpg' },
-      { name: 'Machine Deadlift',       muscle: 'Hamstrings', sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Leverage_Deadlift/0.jpg' },
-      { name: 'Static Lunges',          muscle: 'Glutes',     sets: 3, reps: '10-12', tempo: '2-0-1-0', rest: '60 sec',  imgId: 'Barbell_Walking_Lunge/0.jpg' },
-      { name: 'Calf Raises',            muscle: 'Calves',     sets: 4, reps: '12-15', tempo: '2-1-1-1', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
-      { name: 'Plank',                  muscle: 'Core',       sets: 3, reps: '45s',   tempo: '-',       rest: '45 sec',  imgId: 'Plank/1.jpg' },
+      { name: 'Machine Deadlift',                 muscle: 'Hamstrings', sets: 3, reps: '8-10',  rest: '180 sec', imgId: 'Leverage_Deadlift/0.jpg' },
+      { name: 'Dumbbell Bench Press',             muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Bench_Press/0.jpg' },
+      { name: 'Seated Cable Rows',                muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Seated_Cable_Rows/0.jpg' },
+      { name: 'Seated Leg Curl',                  muscle: 'Hamstrings', sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Seated_Leg_Curl/0.jpg' },
+      { name: 'Incline Dumbbell Curl',            muscle: 'Biceps',     sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Incline_Dumbbell_Curl/0.jpg' },
     ]
   },
-  4: {
-    name: 'Upper B', focus: 'Hypertrophy',
+  5: {
+    name: 'Full Body C', short: 'Full C', focus: 'Full body',
     exercises: [
-      { name: 'Incline Dumbbell Press', muscle: 'Chest',      sets: 4, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Incline_Dumbbell_Press/0.jpg' },
-      { name: 'Lat Pulldown',           muscle: 'Back',       sets: 4, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
-      { name: 'Dumbbell Shoulder Press',muscle: 'Shoulders',  sets: 3, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
-      { name: 'Face Pulls',             muscle: 'Rear Delt',  sets: 3, reps: '15-20', tempo: '2-1-1-0', rest: '60 sec',  imgId: 'Face_Pull/0.jpg' },
-      { name: 'Cable Tricep Pushdowns', muscle: 'Triceps',    sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '60 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
-    ]
-  },
-  6: {
-    name: 'Lower B', focus: 'Hypertrophy',
-    exercises: [
-      { name: 'Deadlift',               muscle: 'Full Body',  sets: 4, reps: '6-8',   tempo: '3-0-1-0', rest: '120 sec', imgId: 'Barbell_Deadlift/0.jpg' },
-      { name: 'Bulgarian Split Squats', muscle: 'Glutes',     sets: 3, reps: '10-12', tempo: '3-0-1-0', rest: '90 sec',  imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
-      { name: 'Leg Curls',              muscle: 'Hamstrings', sets: 3, reps: '12-15', tempo: '3-0-1-0', rest: '60 sec',  imgId: 'Lying_Leg_Curls/0.jpg' },
-      { name: 'Leg Press',              muscle: 'Quads',      sets: 3, reps: '15-20', tempo: '2-0-1-0', rest: '90 sec',  imgId: 'Leg_Press/0.jpg' },
-      { name: 'Calf Raises',            muscle: 'Calves',     sets: 4, reps: '15-20', tempo: '2-1-1-1', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
+      { name: 'Bulgarian Split Squats',           muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+      { name: 'Dumbbell Shoulder Press',          muscle: 'Shoulders',  sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+      { name: 'Pull-ups',                         muscle: 'Back',       sets: 3, reps: '6-10',  rest: '150 sec', imgId: 'Pullups/0.jpg' },
+      { name: 'Leg Extensions',                   muscle: 'Quads',      sets: 2, reps: '12-15', rest: '90 sec',  imgId: 'Leg_Extensions/0.jpg' },
+      { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 2, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+      { name: 'Cable Tricep Pushdowns',           muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
     ]
   }
 };
+const SESSIONS_PER_WEEK = 3;
+const PROGRAMME_START   = '2026-09-21';   // Monday of the week the full-body plan replaced Upper/Lower
+
+// The Upper/Lower split used from March to September 2026. Kept, not deleted, so past dates
+// still open as the session that was actually done, and its exercises stay in the swap list.
+// Never offered in the picker or the week planner.
+const LEGACY_WORKOUTS = [
+  { name: 'Upper A', focus: 'Strength', exercises: [
+    { name: 'Barbell Bench Press',     muscle: 'Chest',      sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
+    { name: 'T-Bar Rows',              muscle: 'Back',       sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Bent_Over_Barbell_Row/0.jpg' },
+    { name: 'Dumbbell Shoulder Press', muscle: 'Shoulders',  sets: 3, reps: '6-8',   rest: '90 sec',  imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+    { name: 'Pull-ups',                muscle: 'Back',       sets: 3, reps: '6-8',   rest: '90 sec',  imgId: 'Pullups/0.jpg' },
+    { name: 'Dumbbell Curl',           muscle: 'Biceps',     sets: 3, reps: '8-10',  rest: '60 sec',  imgId: 'Dumbbell_Bicep_Curl/0.jpg' },
+  ]},
+  { name: 'Lower A', focus: 'Strength', exercises: [
+    { name: 'Barbell Squat',           muscle: 'Quads',      sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Barbell_Squat/0.jpg' },
+    { name: 'Machine Deadlift',        muscle: 'Hamstrings', sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Leverage_Deadlift/0.jpg' },
+    { name: 'Static Lunges',           muscle: 'Glutes',     sets: 3, reps: '10-12', rest: '60 sec',  imgId: 'Barbell_Walking_Lunge/0.jpg' },
+    { name: 'Calf Raises',             muscle: 'Calves',     sets: 4, reps: '12-15', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
+    { name: 'Plank',                   muscle: 'Core',       sets: 3, reps: '45s',   rest: '45 sec',  imgId: 'Plank/1.jpg' },
+  ]},
+  { name: 'Upper B', focus: 'Hypertrophy', exercises: [
+    { name: 'Incline Dumbbell Press',  muscle: 'Chest',      sets: 4, reps: '10-12', rest: '90 sec',  imgId: 'Incline_Dumbbell_Press/0.jpg' },
+    { name: 'Lat Pulldown',            muscle: 'Back',       sets: 4, reps: '10-12', rest: '90 sec',  imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+    { name: 'Dumbbell Shoulder Press', muscle: 'Shoulders',  sets: 3, reps: '10-12', rest: '90 sec',  imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+    { name: 'Face Pulls',              muscle: 'Rear Delt',  sets: 3, reps: '15-20', rest: '60 sec',  imgId: 'Face_Pull/0.jpg' },
+    { name: 'Cable Tricep Pushdowns',  muscle: 'Triceps',    sets: 3, reps: '12-15', rest: '60 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
+  ]},
+  { name: 'Lower B', focus: 'Hypertrophy', exercises: [
+    { name: 'Deadlift',                muscle: 'Full Body',  sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Barbell_Deadlift/0.jpg' },
+    { name: 'Bulgarian Split Squats',  muscle: 'Glutes',     sets: 3, reps: '10-12', rest: '90 sec',  imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+    { name: 'Leg Curls',               muscle: 'Hamstrings', sets: 3, reps: '12-15', rest: '60 sec',  imgId: 'Lying_Leg_Curls/0.jpg' },
+    { name: 'Leg Press',               muscle: 'Quads',      sets: 3, reps: '15-20', rest: '90 sec',  imgId: 'Leg_Press/0.jpg' },
+    { name: 'Calf Raises',             muscle: 'Calves',     sets: 4, reps: '15-20', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
+  ]},
+];
+
+// Resolve a workout by name, current programme first, then the old split (for past dates).
+function findWorkout(name) {
+  if (!name) return null;
+  return Object.values(WORKOUTS).find(w => w.name === name)
+      || LEGACY_WORKOUTS.find(w => w.name === name)
+      || null;
+}
 
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 // imgId values are full relative paths: folder/0.jpg
@@ -1175,6 +1324,7 @@ const EXERCISE_LIBRARY = [
   { name: 'Dips - Triceps Version', muscle: 'Triceps', imgId: 'Dips_-_Triceps_Version/0.jpg' },
   { name: 'Lying Triceps Press', muscle: 'Triceps', imgId: 'Lying_Triceps_Press/0.jpg' },
   { name: 'Cable One Arm Tricep Extension', muscle: 'Triceps', imgId: 'Cable_One_Arm_Tricep_Extension/0.jpg' },
+  { name: 'Standing Dumbbell Triceps Extension', muscle: 'Triceps', imgId: 'Standing_Dumbbell_Triceps_Extension/0.jpg' },
   { name: 'Tricep Dumbbell Kickback', muscle: 'Triceps', imgId: 'Tricep_Dumbbell_Kickback/0.jpg' },
   { name: 'Close-Grip Barbell Bench Press', muscle: 'Triceps', imgId: 'Close-Grip_Barbell_Bench_Press/0.jpg' },
   { name: 'Bench Dips', muscle: 'Triceps', imgId: 'Bench_Dips/0.jpg' },
@@ -1227,8 +1377,9 @@ const EXERCISE_LIBRARY = [
 // Merge workout exercises + library, deduping by name
 const ALL_EXERCISES = (() => {
   const seen = new Set(), out = [];
-  // First add all workout exercises
-  Object.values(WORKOUTS).forEach(w => w.exercises.forEach(ex => {
+  // First add all workout exercises (current programme, then the old split so its lifts can
+  // still be swapped back in and looked up by name)
+  [...Object.values(WORKOUTS), ...LEGACY_WORKOUTS].forEach(w => w.exercises.forEach(ex => {
     if (!seen.has(ex.name)) { seen.add(ex.name); out.push({ ...ex }); }
   }));
   // Then add library exercises
@@ -1246,9 +1397,9 @@ function getMondayStr(dateStr) {
   return d.toISOString().split('T')[0];
 }
 
-const DEFAULT_PLAN = { 0: null, 1: 'Upper A', 2: 'Lower A', 3: null, 4: 'Upper B', 5: null, 6: 'Lower B' };
-const WORKOUT_NAMES = ['Upper A', 'Lower A', 'Upper B', 'Lower B', 'Swim', 'Run'];
+const DEFAULT_PLAN = { 0: null, 1: 'Full Body A', 2: null, 3: 'Full Body B', 4: null, 5: 'Full Body C', 6: null };
 const CARDIO_TYPES  = ['Swim', 'Run'];
+const WORKOUT_NAMES = [...Object.values(WORKOUTS).map(w => w.name), ...CARDIO_TYPES];
 
 function getWeekPlan(mondayStr) {
   if (!weekPlans[mondayStr]) return { ...DEFAULT_PLAN };
@@ -1259,7 +1410,12 @@ function getWeekPlan(mondayStr) {
     if (key in stored) merged[i] = stored[key] ?? null;
     else if (i in stored) merged[i] = stored[i] ?? null;
   }
-  return merged;
+  // A plan saved for this week or later under the old Upper/Lower split was laid out for
+  // four sessions on different days. Mapping it day by day leaves its rest days sitting on
+  // the new Mon/Wed/Fri slots, so the whole plan is treated as stale and the default applies.
+  const stale = mondayStr >= PROGRAMME_START &&
+    Object.values(merged).some(v => v && !WORKOUT_NAMES.includes(v));
+  return stale ? { ...DEFAULT_PLAN } : merged;
 }
 
 function getWorkoutForDate(dateStr) {
@@ -1270,7 +1426,7 @@ function getWorkoutForDate(dateStr) {
   const wkName = plan[dow];
   if (!wkName) return null;
   if (CARDIO_TYPES.includes(wkName)) return { name: wkName, cardio: true };
-  return Object.values(WORKOUTS).find(w => w.name === wkName) || null;
+  return findWorkout(wkName);
 }
 
 function renderDateSelector() {
@@ -1295,7 +1451,7 @@ function renderDateSelector() {
       const loggedName = allLogs.find(l => l.date === ds)?.workout || null;
       const cardioEntry = allCardio.find(c => c.date === ds);
       wo = loggedName
-        ? (Object.values(WORKOUTS).find(w => w.name === loggedName) || { name: loggedName })
+        ? (findWorkout(loggedName) || { name: loggedName })
         : cardioEntry ? { name: cardioEntry.type, cardio: true }
         : getWorkoutForDate(ds);
     } else {
@@ -1304,7 +1460,7 @@ function renderDateSelector() {
     // Future: workout days dimmed but visible; rest days very faint
     const opacity  = isFuture ? (wo ? '0.5' : '0.25') : '1';
     const noTap    = isFuture ? 'pointer-events:none' : '';
-    const woLabel  = wo ? `<span class="pill-workout">${wo.name}${hasLogs ? ' ✓' : ''}</span>` : '';
+    const woLabel  = wo ? `<span class="pill-workout">${wo.short || wo.name}${hasLogs ? ' ✓' : ''}</span>` : '';
     pills.push(`<button class="day-pill ${ds === selectedDate ? 'selected' : ''} ${isToday ? 'is-today' : ''}"
       style="opacity:${opacity};${noTap}"
       onclick="selectDate('${ds}', ${dow})">
@@ -1360,6 +1516,9 @@ function closeWorkoutPicker() {
 
 function clearSwaps() {
   Object.keys(swappedExercises).forEach(k => delete swappedExercises[k]);
+  // Added/removed sets belong to the session on screen; without this they leaked onto the
+  // next date or workout opened, since both are keyed only by exercise slot.
+  Object.keys(extraSets).forEach(k => delete extraSets[k]);
   cancelRestTimer();
   workoutStartTime = null;
   document.getElementById('completeBanner')?.classList.remove('show');
@@ -1524,9 +1683,7 @@ function selectDate(dateStr, dow) {
     // Past date: derive workout and swaps from what was actually logged
     const dateLogs = allLogs.filter(l => l.date === dateStr);
     const loggedWorkoutName = dateLogs[0]?.workout || null;
-    workout = loggedWorkoutName
-      ? Object.values(WORKOUTS).find(w => w.name === loggedWorkoutName) || null
-      : null;
+    workout = findWorkout(loggedWorkoutName);
     // Restore exercise swaps: any log entry whose exercise name differs from the
     // template exercise at that index was a swap (requires exIdx stored in the log)
     if (workout) {
@@ -1979,6 +2136,7 @@ async function deleteWeight(id) {
   await userWeights().doc(id).delete();
   allWeights = allWeights.filter(w => w._id !== id);
   renderGain();
+  renderWeighIn();
 }
 
 async function deleteSession(date) {
@@ -1986,6 +2144,7 @@ async function deleteSession(date) {
   await Promise.all(toDelete.map(l => userLogs().doc(l._id).delete()));
   allLogs = allLogs.filter(l => l.date !== date);
   renderHistory();
+  renderWeekCard();
 }
 window.deleteSession = deleteSession;
 
@@ -1997,7 +2156,23 @@ async function logWeightUI() {
   const btn = document.getElementById('weightLogBtn');
   btn.textContent = '…';
   btn.disabled = true;
+  await saveTodayWeight(val);
+  renderGain();
+}
 
+// The same save, from the weigh-in prompt on the Today tab.
+async function logWeightTodayUI() {
+  const input = document.getElementById('todayWeightInput');
+  const val   = parseFloat(input.value);
+  if (!val || val < 30 || val > 200) { input.focus(); return; }
+  const btn = document.getElementById('todayWeightBtn');
+  btn.textContent = '…';
+  btn.disabled = true;
+  await saveTodayWeight(val);
+  renderWeighIn();
+}
+
+async function saveTodayWeight(val) {
   const existing = allWeights.find(w => w.date === todayStr);
   if (existing) {
     await userWeights().doc(existing._id).delete();
@@ -2011,7 +2186,7 @@ async function logWeightUI() {
   allWeights.sort((a, b) => a.date.localeCompare(b.date));
 
   showSyncToast();
-  renderGain();
+  renderWeighIn();
 }
 
 async function logSet(exIdx, exercise, setIdx, weight, reps) {
@@ -2051,16 +2226,213 @@ function showSyncToast() {
 }
 
 // ── Derived helpers ───────────────────────────────────────────────────────────
-function getPrevBest(exerciseName) {
-  const logs = getLogs()
-    .filter(l => l.exercise === exerciseName && l.date !== selectedDate && l.weight > 0)
-    .sort((a, b) => b.date.localeCompare(a.date));
-  if (!logs.length) return null;
-  const latestDate = logs[0].date;
-  const latestLogs = logs.filter(l => l.date === latestDate);
-  const maxWeight  = Math.max(...latestLogs.map(l => l.weight));
-  return { date: latestDate, weight: maxWeight };
+const NO_WEIGHT  = ['Plank', 'Hanging Leg Raises', 'Dead Bug'];
+const ASSISTED   = ['Pull-ups'];   // assisted machine: the logged weight is help, so lower = harder
+const BREAK_DAYS = 10;             // days off an exercise before the return-from-break loads kick in
+
+function isAssisted(name) { return ASSISTED.includes(name); }
+function e1rm(weight, reps) { return weight * (1 + reps / 30); }   // Epley estimate
+function parseRange(reps) {
+  const m = String(reps || '').match(/^(\d+)\s*-\s*(\d+)$/);
+  return m ? { lo: +m[1], hi: +m[2] } : null;
 }
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function daysBetween(a, b) {
+  return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+}
+function shortDate(dateStr) {
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+function fmtKg(w) { return +(+w).toFixed(1); }
+
+// The smallest jump the equipment realistically allows at this load. Dumbbells in this gym go
+// up in 2 kg pairs (12, 14, 16...), light dumbbells in 1 kg, cable stacks in 2.5, heavy leg
+// machines in 5. The assisted pull-up stack has been used in both 7 kg (35/28/21/14) and
+// 5 kg (25/20/15) steps, so the step is read off the weight itself.
+function loadStep(name, w) {
+  if (isAssisted(name)) return w % 7 === 0 ? 7 : 5;
+  if (w <= 10) return 1;
+  if (/dumbbell|split squat|lateral raise/i.test(name)) return 2;
+  if (w >= 60) return 5;
+  return 2.5;
+}
+function roundTo(x, step) { return +(Math.round(x / step) * step).toFixed(1); }
+
+// The most recent session of an exercise before the date on screen, sets in order.
+function lastSession(name, beforeDate = selectedDate) {
+  const logs = allLogs.filter(l => l.exercise === name && l.date < beforeDate);
+  if (!logs.length) return null;
+  const date = logs.reduce((m, l) => (l.date > m ? l.date : m), '');
+  const sets = logs.filter(l => l.date === date).sort((a, b) => a.setIdx - b.setIdx);
+  return { date, sets };
+}
+
+// "18 × 8, 8 · 20 × 7" — consecutive sets at the same weight grouped, so a pyramid is visible.
+function formatSets(sets) {
+  const groups = [];
+  sets.forEach(s => {
+    const g = groups[groups.length - 1];
+    if (g && g.weight === s.weight) g.reps.push(s.reps);
+    else groups.push({ weight: s.weight, reps: [s.reps] });
+  });
+  return groups.map(g => `${fmtKg(g.weight)} × ${g.reps.join(', ')}`).join(' · ');
+}
+
+// Double progression. One weight on every set; once every set reaches the top of the rep
+// range, the weight goes up one step and the reps drop back to the bottom. This replaces the
+// old "+2.5 kg on your best set" nudge, which rewarded a heavier final set at 3-4 reps: the
+// logs were full of 40x8, 40x8, 50x4, 50x4. Sets should end 0-3 reps short of failure
+// (Refalo 2023), which a rep range with a ceiling enforces.
+function suggestLoad(ex) {
+  if (NO_WEIGHT.includes(ex.name)) return null;
+  const last = lastSession(ex.name);
+  if (!last) return null;
+  const weighted = last.sets.filter(s => s.weight > 0);
+  if (!weighted.length) return null;
+
+  const assisted = isAssisted(ex.name);
+  const range    = parseRange(ex.reps);
+  const top      = assisted ? Math.min(...weighted.map(s => s.weight)) : Math.max(...weighted.map(s => s.weight));
+  const atTop    = weighted.filter(s => s.weight === top);
+  const step     = loadStep(ex.name, top);
+  const harder   = w => fmtKg(assisted ? w - step : w + step);
+  const easier   = w => fmtKg(assisted ? w + step : Math.max(0, w - step));
+  const gap      = daysBetween(last.date, selectedDate);
+  const base     = { lastDate: last.date, lastStr: formatSets(last.sets), gap, repsHint: ex.reps };
+
+  // Back after a break. Strength dips a little and returns within a session or two, so the
+  // first session back starts below the old load rather than failing at it.
+  if (gap >= BREAK_DAYS) {
+    const long = gap >= 28;
+    // Nearest real step to 80-90%, always at least one step below the old load.
+    let weight = assisted
+      ? fmtKg(top + step * (long ? 2 : 1))
+      : roundTo(top * (long ? 0.8 : 0.9), step);
+    if (!assisted && weight >= top) weight = fmtKg(Math.max(step, top - step));
+    return { ...base, kind: 'break', weight,
+      text: `Back after ${gap} days: start at ${weight} kg (${long ? '~80%' : '~90%'}), ${long ? 'build back over a few sessions' : 'full weight next session'}` };
+  }
+  if (!range) return { ...base, kind: 'same', weight: top, text: `${fmtKg(top)} kg, beat last time` };
+
+  // Too heavy last time: the top load dragged reps under the range.
+  const minTopReps = Math.min(...atTop.map(s => s.reps));
+  if (minTopReps < range.lo) {
+    const inRange = weighted.filter(s => s.reps >= range.lo).map(s => s.weight);
+    const weight  = inRange.length
+      ? fmtKg(assisted ? Math.min(...inRange) : Math.max(...inRange))
+      : easier(top);
+    return { ...base, kind: 'heavy', weight,
+      text: `${fmtKg(top)} kg fell to ${minTopReps} reps. Use ${weight} kg on every set, aim for ${range.lo}+` };
+  }
+
+  // Earned: every set at one weight, all at the top of the range.
+  const straight = atTop.length === weighted.length && weighted.length >= 2;
+  if (straight && weighted.every(s => s.reps >= range.hi)) {
+    const weight = harder(top);
+    return { ...base, kind: 'up', weight,
+      text: `All sets hit ${range.hi}: go to ${weight} kg${assisted ? ' assist' : ''}, aim for ${range.lo}+` };
+  }
+
+  // Otherwise hold the load and add reps.
+  const target = Math.min(range.hi, minTopReps + 1);
+  return { ...base, kind: 'same', weight: top,
+    text: `Stay at ${fmtKg(top)} kg on every set, aim for ${target}+ reps` };
+}
+
+// Live feedback on a set just logged, so a bad load is fixed on the next set, not next week.
+function setFeedback(ex, weight, reps) {
+  const range = parseRange(ex.reps);
+  if (!range || NO_WEIGHT.includes(ex.name) || !(weight > 0) || !(reps > 0)) return null;
+  const assisted = isAssisted(ex.name);
+  const step = loadStep(ex.name, weight);
+  if (reps < range.lo) {
+    const next = fmtKg(assisted ? weight + step : Math.max(0, weight - step));
+    return { cls: 'heavy', next, text: `${reps} reps is under ${range.lo}: drop to ${next} kg for the next set` };
+  }
+  if (reps > range.hi + 2) {
+    const next = fmtKg(assisted ? weight - step : weight + step);
+    return { cls: 'light', next, text: `${reps} reps is well past ${range.hi}: go to ${next} kg for the next set` };
+  }
+  return null;
+}
+
+// ── Consistency ───────────────────────────────────────────────────────────────
+// The review's main finding: the programme worked in March-April at 3.5 sessions a week and
+// stalled when that fell below one. These make the week's count and the gap impossible to miss.
+function sessionDateSet() { return new Set(allLogs.map(l => l.date)); }
+function weekSessionCount(mondayStr, dates = sessionDateSet()) {
+  let n = 0;
+  for (let i = 0; i < 7; i++) if (dates.has(addDays(mondayStr, i))) n++;
+  return n;
+}
+// Consecutive weeks with SESSIONS_PER_WEEK+ sessions. The current week adds to the streak once
+// it is hit, but an unfinished current week never breaks it.
+function weekStreak() {
+  const dates = sessionDateSet();
+  const thisMon = getMondayStr(todayStr);
+  let streak = weekSessionCount(thisMon, dates) >= SESSIONS_PER_WEEK ? 1 : 0;
+  for (let mon = addDays(thisMon, -7); weekSessionCount(mon, dates) >= SESSIONS_PER_WEEK; mon = addDays(mon, -7)) streak++;
+  return streak;
+}
+// The session after the last full-body one logged (A -> B -> C -> A), A if none yet.
+function nextInRotation() {
+  const order = Object.entries(WORKOUTS);   // [[dow, workout], ...] in key order: A, B, C
+  const last = allLogs
+    .filter(l => order.some(([, w]) => w.name === l.workout) && l.date <= todayStr)
+    .reduce((m, l) => (!m || l.date > m.date || (l.date === m.date && (l.ts || 0) > (m.ts || 0)) ? l : m), null);
+  const i = last ? order.findIndex(([, w]) => w.name === last.workout) : -1;
+  const [dow, w] = order[(i + 1) % order.length];
+  return { dow: parseInt(dow), name: w.name };
+}
+
+function daysSinceLastSession() {
+  const past = allLogs.filter(l => l.date < todayStr).map(l => l.date);
+  if (allLogs.some(l => l.date === todayStr)) return 0;
+  if (!past.length) return null;
+  return daysBetween(past.reduce((m, d) => (d > m ? d : m), ''), todayStr);
+}
+
+// ── Muscle coverage ───────────────────────────────────────────────────────────
+// Weekly sets per muscle, counted fractionally (Pelland 2024): a set counts 1 for the muscle
+// it targets and 0.5 for a muscle doing real work as a helper, so presses count towards
+// triceps and rows/pulldowns towards biceps. Compared against what the plan itself prescribes,
+// so "Quads 0/8" means legs were skipped, which is the failure the old split hid for months.
+const COVERAGE_GROUPS = ['Quads', 'Hamstrings', 'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps'];
+const MUSCLE_TO_GROUP = {
+  Quads: 'Quads', Glutes: 'Quads', Hamstrings: 'Hamstrings', 'Full Body': 'Hamstrings',
+  Chest: 'Chest', Back: 'Back', Shoulders: 'Shoulders', 'Rear Delt': 'Shoulders',
+  Biceps: 'Biceps', Triceps: 'Triceps',
+};
+function setContribution(name, muscle) {
+  const g = MUSCLE_TO_GROUP[muscle];
+  if (!g) return {};
+  const out = { [g]: 1 };
+  if (g === 'Chest' && !/fly|flye|crossover|butterfly/i.test(name)) out.Triceps = 0.5;
+  if (g === 'Shoulders' && /press/i.test(name)) out.Triceps = 0.5;
+  if (g === 'Back' && !/shrug|straight-arm|face pull/i.test(name)) out.Biceps = 0.5;
+  return out;
+}
+function muscleOf(name) { return ALL_EXERCISES.find(e => e.name === name)?.muscle || null; }
+function coverage(fromDate, toDateExcl) {
+  const out = Object.fromEntries(COVERAGE_GROUPS.map(g => [g, 0]));
+  allLogs.forEach(l => {
+    if (l.date < fromDate || l.date >= toDateExcl) return;
+    const c = setContribution(l.exercise, muscleOf(l.exercise));
+    Object.entries(c).forEach(([g, v]) => { out[g] += v; });
+  });
+  return out;
+}
+const PLANNED_COVERAGE = (() => {
+  const out = Object.fromEntries(COVERAGE_GROUPS.map(g => [g, 0]));
+  Object.values(WORKOUTS).forEach(w => w.exercises.forEach(ex => {
+    Object.entries(setContribution(ex.name, ex.muscle)).forEach(([g, v]) => { out[g] += v * ex.sets; });
+  }));
+  return out;
+})();
 
 function getTodayLogs(exerciseName) {
   return getLogs().filter(l => l.date === selectedDate && l.exercise === exerciseName);
@@ -2099,6 +2471,94 @@ function renderFuelStrip() {
     <div class="fuel-strip-track"><div class="fuel-strip-fill" style="width:${kcalPct}%"></div></div>`;
 }
 
+// ── Morning weigh-in prompt (Today tab) ───────────────────────────────────────
+// 14 weigh-ins in six months meant the trend and rate on the Gain tab never had enough points
+// to say anything. The prompt sits on the screen already opened every morning for posture,
+// and shrinks to one line once today's weight is in.
+function renderWeighIn() {
+  const el = document.getElementById('weighinContent');
+  if (!el) return;
+  if (selectedDate !== todayStr) { el.innerHTML = ''; return; }
+  const todayEntry = allWeights.find(w => w.date === todayStr);
+  if (todayEntry) {
+    const trend = trendSeries().slice(-1)[0];
+    el.innerHTML = `<div class="weighin-done">Weighed in: <b>${todayEntry.weight} kg</b>${
+      trend && trend.n > 1 ? ` · 7-day trend ${trend.weight.toFixed(1)} kg` : ''}</div>`;
+    return;
+  }
+  const last = allWeights[allWeights.length - 1];
+  el.innerHTML = `
+    <div class="weighin-card">
+      <div class="weighin-text">
+        <div class="weighin-title">Morning weigh-in</div>
+        <div class="weighin-sub">After the toilet, before food${last ? ` · last ${last.weight} kg on ${shortDate(last.date)}` : ''}</div>
+      </div>
+      <input class="weighin-input" id="todayWeightInput" type="number" inputmode="decimal" step="0.1"
+        placeholder="${last ? last.weight : 'kg'}">
+      <button class="weighin-btn" id="todayWeightBtn" onclick="logWeightTodayUI()">Log</button>
+    </div>`;
+}
+
+// ── This week: sessions, streak, gap, muscle coverage (Today tab) ──────────────
+function renderWeekCard() {
+  const el = document.getElementById('weekContent');
+  if (!el) return;
+  if (selectedDate !== todayStr) { el.innerHTML = ''; return; }
+
+  const thisMon = getMondayStr(todayStr);
+  const done    = weekSessionCount(thisMon);
+  const streak  = weekStreak();
+  const gap     = daysSinceLastSession();
+  const dots    = Array.from({ length: Math.max(SESSIONS_PER_WEEK, done) }, (_, i) =>
+    `<span class="week-dot ${i < done ? 'on' : ''}"></span>`).join('');
+
+  const streakTxt = streak > 0
+    ? `${streak}-week streak at ${SESSIONS_PER_WEEK}+ sessions`
+    : `Hit ${SESSIONS_PER_WEEK} this week to start a streak`;
+
+  let gapHtml = '';
+  if (gap !== null && gap >= BREAK_DAYS) {
+    gapHtml = `<div class="week-gap week-gap-bad"><b>${gap} days</b> since your last session. Loads today start
+      below where you left off and build back over a session or two. Just get the session done.</div>`;
+  } else if (gap !== null && gap >= 4) {
+    gapHtml = `<div class="week-gap"><b>${gap} days</b> since your last session.</div>`;
+  }
+
+  // This week against the plan, with the last four full weeks as the honest average.
+  const thisWeek = coverage(thisMon, addDays(thisMon, 7));
+  const last4    = coverage(addDays(thisMon, -28), thisMon);
+  const rows = COVERAGE_GROUPS.map(g => {
+    const planned = PLANNED_COVERAGE[g];
+    const now     = thisWeek[g];
+    const avg     = last4[g] / 4;
+    const pctNow  = planned ? Math.min(100, (now / planned) * 100) : 0;
+    const ratio   = planned ? avg / planned : 1;
+    const avgCls  = ratio >= 0.8 ? 'ok' : ratio >= 0.4 ? 'mid' : 'low';
+    return `
+      <div class="cov-row">
+        <span class="cov-name">${g}</span>
+        <div class="cov-track"><div class="cov-fill ${now >= planned * 0.8 ? 'full' : ''}" style="width:${pctNow}%"></div></div>
+        <span class="cov-val">${fmtKg(now)}/${fmtKg(planned)}</span>
+        <span class="cov-avg cov-${avgCls}">${avg.toFixed(1)}</span>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="week-card">
+      <div class="week-head">
+        <div>
+          <div class="week-title">This week</div>
+          <div class="week-sub">${streakTxt}</div>
+        </div>
+        <div class="week-count"><span class="week-dots">${dots}</span><b>${done}/${SESSIONS_PER_WEEK}</b></div>
+      </div>
+      ${gapHtml}
+      <div class="cov-head"><span>Sets per muscle</span><span>week</span><span>avg</span></div>
+      ${rows}
+      <div class="cov-foot">Week = sets so far / what all ${SESSIONS_PER_WEEK} sessions give. Avg = weekly average over the last 4 weeks.</div>
+    </div>`;
+}
+
 // ── Render today ──────────────────────────────────────────────────────────────
 function renderToday() {
   const selDateObj = new Date(selectedDate + 'T12:00:00');
@@ -2108,6 +2568,8 @@ function renderToday() {
   // Posture block sits above the workout and is rendered for every day, rest days included,
   // since it is a daily habit rather than part of the session. It hides itself on past dates.
   renderPosture();
+  renderWeighIn();
+  renderWeekCard();
 
   if (!workout) {
     document.getElementById('workoutTitle').textContent = 'Rest Day';
@@ -2117,11 +2579,19 @@ function renderToday() {
     const isToday = selectedDate === todayStr;
     const day = isToday ? dayNutrition(todayStr) : null;
     const short = day ? KCAL_TARGET - day.kcal : null;
+    // The fixed Mon/Wed/Fri days are a default, not the point. If today is a planned rest day
+    // but the week is behind, offer the next session in the A/B/C rotation right here.
+    const next = isToday ? nextInRotation() : null;
+    const behind = isToday && weekSessionCount(getMondayStr(todayStr)) < SESSIONS_PER_WEEK;
+    const trainedToday = allLogs.some(l => l.date === todayStr);
     document.getElementById('todayContent').innerHTML = `
       <div class="rest-screen">
         <div class="emoji">😴</div>
         <h2>Recovery Day</h2>
         <p>Rest is where the gains happen. No training cue to eat today, so it's on you.</p>
+        ${behind && next && !trainedToday ? `
+          <div class="catchup-note">${weekSessionCount(getMondayStr(todayStr))}/${SESSIONS_PER_WEEK} sessions this week so far</div>
+          <button class="catchup-btn" onclick="selectWorkout(${next.dow})">Train now: ${next.name}</button>` : ''}
         ${isToday && NUTRITION_ENABLED ? `<div class="rest-fuel-note">${short > 0
             ? `<strong>${short} cal</strong> still needed today` : 'Calories hit for today ✓'}</div>` : ''}
       </div>`;
@@ -2156,6 +2626,8 @@ function renderToday() {
   document.getElementById('workoutTitle').textContent = workout.name;
 
   const totalSets = workout.exercises.reduce((s, e) => s + e.sets, 0);
+  // Rough session length: each set ~40s of work plus its rest, plus ~5 min warm-up.
+  const estMins = Math.round((workout.exercises.reduce((s, e) => s + e.sets * ((parseInt(e.rest) || 60) + 40), 0) / 60 + 5) / 5) * 5;
 
   const overviewRows = workout.exercises.map((origEx, i) => {
     const ex = swappedExercises[i] ? { ...origEx, ...swappedExercises[i] } : origEx;
@@ -2178,7 +2650,7 @@ function renderToday() {
           <div class="overview-stats">
             <span class="overview-stat"><b>${workout.exercises.length}</b> exercises</span>
             <span class="overview-stat"><b>${totalSets}</b> sets</span>
-            <span class="overview-stat"><b>45-60</b> min</span>
+            <span class="overview-stat"><b>~${estMins}</b> min</span>
           </div>
         </div>
         <span class="overview-chevron ${summaryOpen ? 'open' : ''}" id="overviewChevron">▾</span>
@@ -2190,17 +2662,31 @@ function renderToday() {
 
   workout.exercises.forEach((origEx, exIdx) => {
     const ex          = swappedExercises[exIdx] ? { ...origEx, ...swappedExercises[exIdx] } : origEx;
-    const prev        = getPrevBest(ex.name);
     const todayLogged = getTodayLogs(ex.name);
     const icon        = MUSCLE_ICONS[ex.muscle] || '💪';
     const totalSetsEx = Math.max(1, ex.sets + (extraSets[exIdx] || 0));
     const progressPct = Math.round((todayLogged.length / totalSetsEx) * 100);
 
-    const noWeight = ['Plank', 'Hanging Leg Raises', 'Dead Bug'].includes(ex.name);
+    const noWeight  = NO_WEIGHT.includes(ex.name);
     const repsLabel = ex.name === 'Plank' ? 'mins' : 'reps';
+    // Suggestions are for the session about to happen; on a past date they are just noise.
+    const sugg      = selectedDate >= todayStr ? suggestLoad(ex) : null;
+
+    // Rows: the prescribed sets plus any added, and never fewer than the sets already logged
+    // (a re-render used to drop rows added with "+ Add Set").
+    const maxLoggedIdx = todayLogged.reduce((m, l) => Math.max(m, l.setIdx), -1);
+    const rowCount = Math.max(1, ex.sets + (extraSets[exIdx] || 0), maxLoggedIdx + 1);
+
+    // The weight to pre-suggest in an empty row: follow today's last logged set (adjusted if
+    // it fell outside the range), otherwise the double-progression suggestion.
+    const lastToday = [...todayLogged].sort((a, b) => a.setIdx - b.setIdx).pop();
+    const liveFb    = lastToday ? setFeedback(ex, lastToday.weight, lastToday.reps) : null;
+    const rowSuggest = lastToday && lastToday.weight > 0
+      ? (liveFb ? liveFb.next : fmtKg(lastToday.weight))
+      : (sugg ? sugg.weight : '');
 
     let setRowsHtml = '';
-    for (let s = 0; s < ex.sets; s++) {
+    for (let s = 0; s < rowCount; s++) {
       const logged = todayLogged.find(l => l.setIdx === s);
       const isDone = !!logged;
       setRowsHtml += `
@@ -2208,9 +2694,11 @@ function renderToday() {
           <div class="set-num">S${s+1}</div>
           ${noWeight
             ? `<input type="hidden" id="w-${exIdx}-${s}" value="0">`
-            : `<input class="set-input" type="number" inputmode="decimal" placeholder="kg"
+            : `<input class="set-input${rowSuggest !== '' ? ' has-suggest' : ''}" type="number" inputmode="decimal"
+                placeholder="${rowSuggest !== '' ? rowSuggest : 'kg'}" data-suggest="${rowSuggest}"
                 id="w-${exIdx}-${s}" value="${logged ? logged.weight : ''}">`}
-          <input class="set-input" type="number" inputmode="${ex.name === 'Plank' ? 'decimal' : 'numeric'}" placeholder="${repsLabel}"
+          <input class="set-input" type="number" inputmode="${ex.name === 'Plank' ? 'decimal' : 'numeric'}"
+            placeholder="${parseRange(ex.reps) ? ex.reps : repsLabel}"
             id="r-${exIdx}-${s}" value="${logged ? logged.reps : ''}" ${noWeight ? 'style="flex:2"' : ''}>
           <button class="set-done-btn ${isDone ? 'logged' : ''}" id="btn-${exIdx}-${s}"
             onclick="logSetUI(${exIdx}, ${s}, '${ex.name}')">
@@ -2219,6 +2707,13 @@ function renderToday() {
           <button class="set-del-btn" onclick="removeSetUI('${ex.name}', ${s}, 'setrow-${exIdx}-${s}', ${exIdx})">×</button>
         </div>`;
     }
+
+    const progHtml = noWeight || selectedDate < todayStr ? '' : sugg
+      ? `<div class="prog-box">
+           <div class="prog-last">Last time (${shortDate(sugg.lastDate)}): <b>${sugg.lastStr}</b></div>
+           <div class="prog-next prog-${sugg.kind}">→ ${sugg.text}</div>
+         </div>`
+      : `<div class="prog-box"><div class="prog-last">First time on this one: pick a weight you can do for ${parseRange(ex.reps) ? ex.reps : ''} reps with 1-2 left in the tank.</div></div>`;
 
     html += `
       <div class="exercise-card">
@@ -2237,19 +2732,16 @@ function renderToday() {
           <div class="exercise-meta">
             <div class="meta-chip"><span>${ex.sets}</span> sets</div>
             <div class="meta-chip"><span>${ex.reps}</span> reps</div>
-            <div class="meta-chip">Tempo <span>${ex.tempo}</span></div>
             <div class="meta-chip">Rest <span>${ex.rest}</span></div>
+            ${isAssisted(ex.name) ? '<div class="meta-chip">kg = <span>assistance</span></div>' : ''}
           </div>
-          ${noWeight
-            ? ''
-            : (prev
-              ? `<div class="prev-best"><span>Previous best:</span><span class="val">${prev.weight} kg</span><span>on ${new Date(prev.date + 'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${ex.name === 'Pull-ups' ? `<span class="overload-nudge">→ try ${(prev.weight - 2.5).toFixed(1)} kg</span>` : `<span class="overload-nudge">→ try ${(prev.weight + 2.5).toFixed(1)} kg</span>`}</div>`
-              : `<div class="prev-best" style="color:var(--sub)">No previous logs — first time! 🔥</div>`)}
+          ${progHtml}
           <div class="sets-header">
             <span>Set</span>${noWeight ? '' : '<span>Weight</span>'}<span>${repsLabel.charAt(0).toUpperCase() + repsLabel.slice(1)}</span><span></span><span></span>
           </div>
           ${setRowsHtml}
-          <button class="add-set-btn" onclick="addSet(${exIdx}, '${ex.name}')">+ Add Set</button>
+          <div class="set-hint ${liveFb ? 'set-hint-' + liveFb.cls : ''}" id="hint-${exIdx}" ${liveFb ? '' : 'hidden'}>${liveFb ? liveFb.text : ''}</div>
+          <button class="add-set-btn" id="addset-${exIdx}" onclick="addSet(${exIdx}, '${ex.name}')">+ Add Set</button>
           <div class="progress-bar-wrap">
             <div class="progress-bar-label">
               <span>Progress</span>
@@ -2284,14 +2776,21 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
     btn.disabled = false;
     if (navigator.vibrate) navigator.vibrate(40);
     updateProgress(exIdx, exerciseName);
+    renderWeekCard();
     cancelRestTimer();
     document.getElementById('completeBanner')?.classList.remove('show');
     return;
   }
 
-  const weight = document.getElementById(`w-${exIdx}-${setIdx}`).value;
-  const reps   = document.getElementById(`r-${exIdx}-${setIdx}`).value;
-  if (!weight && !reps) return;
+  // An empty weight box means "the suggested weight" shown as its placeholder, so a straight set
+  // at the suggested load is just reps + tap. Reps are always required: a set without them
+  // cannot drive the progression.
+  const wInput = document.getElementById(`w-${exIdx}-${setIdx}`);
+  const rInput = document.getElementById(`r-${exIdx}-${setIdx}`);
+  const weight = wInput.value || wInput.dataset.suggest || '';
+  const reps   = rInput.value;
+  if (!reps) { rInput.focus(); return; }
+  if (wInput.type !== 'hidden' && !weight) { wInput.focus(); return; }
 
   // Start workout timer on first set of this session
   if (!workoutStartTime && allLogs.filter(l => l.date === selectedDate).length === 0) {
@@ -2303,8 +2802,11 @@ async function logSetUI(exIdx, setIdx, exerciseName) {
 
   btn.classList.add('logged');
   btn.textContent = '✓';
+  if (wInput.type !== 'hidden' && !wInput.value) wInput.value = weight;
   if (navigator.vibrate) navigator.vibrate(60);
   updateProgress(exIdx, exerciseName);
+  applySetFeedback(exIdx, parseFloat(weight) || 0, parseInt(reps) || 0);
+  renderWeekCard();
   checkWorkoutComplete();
 
   if (!document.getElementById('completeBanner').classList.contains('show')) {
@@ -2324,12 +2826,48 @@ function updateProgress(exIdx, exerciseName) {
   if (lbl) lbl.textContent = `${logged.length}/${total} sets`;
 }
 
+function currentEx(exIdx) {
+  const origEx = workout.exercises[exIdx];
+  return swappedExercises[exIdx] ? { ...origEx, ...swappedExercises[exIdx] } : origEx;
+}
+
+// After a set is logged: show the too-heavy / too-light hint, and carry the load (adjusted if
+// the set fell outside the range) into the empty rows so the next set is reps + one tap.
+function applySetFeedback(exIdx, weight, reps) {
+  const fb   = setFeedback(currentEx(exIdx), weight, reps);
+  const hint = document.getElementById(`hint-${exIdx}`);
+  if (hint) {
+    hint.hidden      = !fb;
+    hint.className   = 'set-hint' + (fb ? ' set-hint-' + fb.cls : '');
+    hint.textContent = fb ? fb.text : '';
+  }
+  if (!(weight > 0)) return;
+  const next = fb ? fb.next : fmtKg(weight);
+  document.querySelectorAll(`#todayContent input[id^="w-${exIdx}-"]`).forEach(inp => {
+    if (inp.type === 'hidden' || inp.value) return;
+    inp.placeholder = next;
+    inp.dataset.suggest = next;
+    inp.classList.add('has-suggest');
+  });
+}
+
 function addSet(exIdx, exerciseName) {
   if (!extraSets[exIdx]) extraSets[exIdx] = 0;
   extraSets[exIdx]++;
-  const ex        = workout.exercises[exIdx];
-  const newSetIdx = ex.sets + extraSets[exIdx] - 1;
-  const addBtn    = document.querySelector(`#view-today .exercise-card:nth-child(${exIdx + 2}) .add-set-btn`);
+  const ex        = currentEx(exIdx);
+  // Next free slot: after every existing row, so an added row never reuses a logged setIdx.
+  const existing  = [...document.querySelectorAll(`#todayContent [id^="setrow-${exIdx}-"]`)]
+    .map(r => parseInt(r.id.split('-')[2]));
+  const newSetIdx = existing.length ? Math.max(...existing) + 1 : 0;
+  const addBtn    = document.getElementById(`addset-${exIdx}`);
+  // Same load rule as the rendered rows: follow today's last logged set, else the suggestion.
+  const lastToday = getTodayLogs(ex.name).sort((a, b) => a.setIdx - b.setIdx).pop();
+  const fb        = lastToday ? setFeedback(ex, lastToday.weight, lastToday.reps) : null;
+  const firstW    = document.querySelector(`#todayContent input[id^="w-${exIdx}-"]:not([type=hidden])`);
+  const suggest   = lastToday && lastToday.weight > 0
+    ? String(fb ? fb.next : fmtKg(lastToday.weight))
+    : (firstW ? firstW.dataset.suggest || '' : '');
+  const noWeight  = NO_WEIGHT.includes(ex.name);
 
   const rowId = `setrow-${exIdx}-${newSetIdx}`;
   const row = document.createElement('div');
@@ -2337,12 +2875,17 @@ function addSet(exIdx, exerciseName) {
   row.id = rowId;
   row.innerHTML = `
     <div class="set-num">S${newSetIdx + 1}</div>
-    <input class="set-input" type="number" inputmode="decimal" placeholder="kg" id="w-${exIdx}-${newSetIdx}">
-    <input class="set-input" type="number" inputmode="numeric" placeholder="reps" id="r-${exIdx}-${newSetIdx}">
+    ${noWeight
+      ? `<input type="hidden" id="w-${exIdx}-${newSetIdx}" value="0">`
+      : `<input class="set-input${suggest ? ' has-suggest' : ''}" type="number" inputmode="decimal"
+          placeholder="${suggest || 'kg'}" data-suggest="${suggest}" id="w-${exIdx}-${newSetIdx}">`}
+    <input class="set-input" type="number" inputmode="numeric" placeholder="${parseRange(ex.reps) ? ex.reps : 'reps'}" id="r-${exIdx}-${newSetIdx}">
     <button class="set-done-btn" id="btn-${exIdx}-${newSetIdx}"
       onclick="logSetUI(${exIdx}, ${newSetIdx}, '${exerciseName}')">○</button>
     <button class="set-del-btn" onclick="removeSetUI('${exerciseName}', ${newSetIdx}, '${rowId}', ${exIdx})">×</button>`;
-  if (addBtn) addBtn.parentNode.insertBefore(row, addBtn);
+  const hint = document.getElementById(`hint-${exIdx}`);
+  const anchor = hint || addBtn;
+  if (anchor) anchor.parentNode.insertBefore(row, anchor);
   updateProgress(exIdx, exerciseName);
 }
 
@@ -2364,6 +2907,7 @@ async function removeSetUI(exerciseName, setIdx, rowId, exIdx) {
   if (row) row.remove();
   // Update progress bar
   updateProgress(exIdx, exerciseName);
+  if (existing) renderWeekCard();
 }
 
 // ── Render history ────────────────────────────────────────────────────────────
@@ -2562,8 +3106,8 @@ function updateReplanCount() {
   const count = Array.from(selects).filter(s => s.value).length;
   const el = document.getElementById('replanCount');
   if (!el) return;
-  el.textContent = count + '/4 workouts';
-  el.style.color = count === 4 ? 'var(--green)' : 'var(--sub)';
+  el.textContent = `${count}/${SESSIONS_PER_WEEK} workouts`;
+  el.style.color = count >= SESSIONS_PER_WEEK ? 'var(--green)' : 'var(--sub)';
 }
 
 async function saveReplanSheet() {
@@ -2639,7 +3183,8 @@ function doSwap(el) {
 // numbers that matter are: the weight TREND (not today's reading), the RATE of
 // gain against target, and how many calories short of that rate you are.
 const WEIGHT_START = 63;
-const WEIGHT_GOAL  = 70;
+// Was 70 kg, which is now under 2 kg away. 75 kg at 189 cm is a BMI of 21, still lean.
+const WEIGHT_GOAL  = 75;
 
 // Nutrition tracking is PAUSED (2026-08-18). Alex is using MyFitnessPal for food, so every
 // food/calorie surface is gated off behind this one flag rather than deleted: flip it back to
@@ -2695,8 +3240,11 @@ const POSTURE_HABIT = 'Desk habit: sit with a tennis or lacrosse ball between yo
 const NUTRITION_ENABLED = false;
 const KCAL_TARGET    = 3350;
 const PROTEIN_TARGET = 139;
-const RATE_MIN       = 0.6;    // kg/week, the plan's target band
-const RATE_MAX       = 0.8;
+// kg/week target band. Was 0.6-0.8. Iraki et al. 2019 recommend 0.25-0.5% of bodyweight a week
+// for novice/intermediate lifters, ~0.2-0.35 kg at 68 kg; Helms et al. 2023 found a bigger
+// surplus added fat but no extra muscle or strength.
+const RATE_MIN       = 0.2;
+const RATE_MAX       = 0.35;
 const KCAL_PER_KG    = 7700;   // energy in a kg of mixed tissue gained
 
 // Foods from the nutrition plan, plus the calorie-dense staples that actually
@@ -2928,7 +3476,7 @@ function renderGain() {
                ${calib.formulaGap > 0 ? 'an easier surplus than it looks' : 'a bigger, harder surplus than it needs to be'}.`
             : `That's close to the ${FORMULA_TDEE.toLocaleString()} cal the formula assumed, so the current target is about right.`}
         </div>
-        <div class="calib-target">Target range for 0.6-0.8 kg/wk: <strong>${calib.targetLow.toLocaleString()}-${calib.targetHigh.toLocaleString()} cal</strong></div>
+        <div class="calib-target">Target range for ${RATE_MIN}-${RATE_MAX} kg/wk: <strong>${calib.targetLow.toLocaleString()}-${calib.targetHigh.toLocaleString()} cal</strong></div>
       ` : `
         <div class="calib-detail">Needs a bit more logging before this means anything: real weigh-ins
           plus real food logs over a few weeks, not a one-off day.
@@ -3064,11 +3612,19 @@ function buildWeightChart() {
   const maxV   = Math.max(...vals, WEIGHT_GOAL)  + 1;
   const range  = maxV - minV;
 
-  const toX = i => PL + (data.length === 1 ? chartW / 2 : (i / (data.length - 1)) * chartW);
+  // x by date, not by entry number: weigh-ins are irregular, and spacing them evenly hid a
+  // two-month gap as if it were one day.
+  const t0   = new Date(data[0].date + 'T12:00:00').getTime();
+  const tN   = new Date(data[data.length - 1].date + 'T12:00:00').getTime();
+  const span = Math.max(1, tN - t0);
+  const toX = i => PL + (data.length === 1 ? chartW / 2 : ((new Date(data[i].date + 'T12:00:00').getTime() - t0) / span) * chartW);
   const toY = v => PT + ((maxV - v) / range) * chartH;
 
   const points = data.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
   const goalY  = toY(WEIGHT_GOAL);
+  // 7-day trend drawn over the raw weigh-ins: the line the rate is actually computed from.
+  const trend  = trendSeries();
+  const trendPts = trend.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
 
   const labelIndices = data.length === 1
     ? [0]
@@ -3092,27 +3648,55 @@ function buildWeightChart() {
       <line x1="${PL}" y1="${goalY}" x2="${W - PR}" y2="${goalY}"
         stroke="#30d158" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
       <text x="${W - PR + 2}" y="${goalY + 4}" fill="#30d158" font-size="9">Goal</text>
-      <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+      <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linejoin="round" opacity="0.45"/>
       ${dots}
+      ${data.length > 2 ? `<polyline points="${trendPts}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>` : ''}
       ${xLabels}
       ${yLabels}
-    </svg>`;
+    </svg>
+    ${data.length > 2 ? `<div class="chart-legend"><span><i style="background:var(--accent)"></i>weigh-ins</span><span><i style="background:#fff"></i>7-day trend</span></div>` : ''}`;
 }
 
 // ── Graphs tab ────────────────────────────────────────────────────────────────
+// One point per session: the best estimated 1-rep max (Epley) of any set, so 40x8 and 50x4
+// are comparable. Plotting the heaviest weight rewarded the 50x3 set and hid that reps fell.
+// Assisted pull-ups plot the least assistance used instead (lower = stronger).
 function getExerciseHistory(name) {
+  const assisted = isAssisted(name);
   const byDate = {};
-  allLogs.filter(l => l.exercise === name && l.weight > 0).forEach(l => {
-    if (!byDate[l.date] || byDate[l.date] < l.weight) byDate[l.date] = l.weight;
+  allLogs.filter(l => l.exercise === name && l.weight > 0 && l.reps > 0).forEach(l => {
+    const v = assisted ? l.weight : e1rm(l.weight, l.reps);
+    const cur = byDate[l.date];
+    if (!cur || (assisted ? v < cur.weight : v > cur.weight)) {
+      byDate[l.date] = { weight: +v.toFixed(1), top: `${fmtKg(l.weight)} × ${l.reps}` };
+    }
   });
   return Object.entries(byDate)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, weight]) => ({ date, weight }));
+    .map(([date, v]) => ({ date, ...v }));
 }
+
+// Up / flat / down over the last 8 weeks: first session in the window against the last.
+// Within 3% counts as flat, which is roughly one rep on a set of eight.
+function liftTrend(name, weeks = 8) {
+  const recent = getExerciseHistory(name).filter(h => h.date >= addDays(todayStr, -weeks * 7));
+  if (recent.length < 2) return null;
+  const first = recent[0].weight, last = recent[recent.length - 1].weight;
+  if (isAssisted(name)) {
+    const diff = +(last - first).toFixed(1);
+    const dir  = diff < 0 ? 'up' : diff > 0 ? 'down' : 'flat';
+    return { dir, label: diff === 0 ? 'same assist' : `${diff > 0 ? '+' : ''}${diff} kg assist`, sessions: recent.length };
+  }
+  const pct = Math.round((last / first - 1) * 100);
+  const dir = pct > 3 ? 'up' : pct < -3 ? 'down' : 'flat';
+  return { dir, label: `${pct > 0 ? '+' : ''}${pct}%`, sessions: recent.length };
+}
+const TREND_ARROW = { up: '▲', flat: '▬', down: '▼' };
 
 function selectGraphEx(name) {
   selectedGraphEx = name;
   renderGraphs();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function renderGraphs() {
@@ -3129,20 +3713,26 @@ function renderGraphs() {
   } else {
     const opts    = names.map(n => `<option value="${n}" ${n === selectedGraphEx ? 'selected' : ''}>${n}</option>`).join('');
     const history = selectedGraphEx ? getExerciseHistory(selectedGraphEx) : [];
+    const assisted = isAssisted(selectedGraphEx);
     let inner = '';
     if (history.length < 2) {
       inner = `<div class="graph-empty">Log at least 2 sessions of this exercise to see a trend.</div>`;
     } else {
-      const peak    = Math.max(...history.map(h => h.weight));
-      const latest  = history[history.length - 1].weight;
-      const first   = history[0].weight;
-      const gained  = +(latest - first).toFixed(1);
+      const vals    = history.map(h => h.weight);
+      const peak    = assisted ? Math.min(...vals) : Math.max(...vals);
+      const latest  = history[history.length - 1];
+      const change  = +(latest.weight - history[0].weight).toFixed(1);
+      const better  = assisted ? change < 0 : change > 0;
+      const tr      = liftTrend(selectedGraphEx);
       inner = `
+        <div class="graph-note">${assisted
+          ? 'Least assistance used each session. Lower is stronger.'
+          : 'Estimated 1-rep max from your best set each session, so heavier-for-fewer and lighter-for-more compare fairly.'}</div>
         <div class="graph-stats">
-          <div class="graph-stat"><div class="graph-stat-val">${peak}</div><div class="graph-stat-lbl">Peak (kg)</div></div>
-          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--accent)">${latest}</div><div class="graph-stat-lbl">Latest (kg)</div></div>
-          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--green)">+${gained}</div><div class="graph-stat-lbl">Progress (kg)</div></div>
-          <div class="graph-stat"><div class="graph-stat-val">${history.length}</div><div class="graph-stat-lbl">Sessions</div></div>
+          <div class="graph-stat"><div class="graph-stat-val">${peak}</div><div class="graph-stat-lbl">${assisted ? 'Best' : 'Peak'} (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val" style="color:var(--accent)">${latest.weight}</div><div class="graph-stat-lbl">Latest · ${latest.top}</div></div>
+          <div class="graph-stat"><div class="graph-stat-val" style="color:${change === 0 ? 'var(--sub)' : better ? 'var(--green)' : '#ff6961'}">${change > 0 ? '+' : ''}${change}</div><div class="graph-stat-lbl">Since first (kg)</div></div>
+          <div class="graph-stat"><div class="graph-stat-val trend-${tr ? tr.dir : 'flat'}">${tr ? TREND_ARROW[tr.dir] + ' ' + tr.label : '–'}</div><div class="graph-stat-lbl">Last 8 weeks</div></div>
         </div>
         ${buildProgressChart(history, { gradId: 'exGrad', color: '#ff3b30' })}`;
     }
@@ -3151,6 +3741,21 @@ function renderGraphs() {
         <div class="graph-section-title">Exercise Progress</div>
         <select class="graph-select" onchange="selectGraphEx(this.value)">${opts}</select>
         ${inner}
+      </div>`;
+
+    // Every lift trained in the last 8 weeks at a glance: what is moving and what is not.
+    const trends = names.map(n => ({ n, t: liftTrend(n) })).filter(x => x.t)
+      .sort((a, b) => ({ down: 0, flat: 1, up: 2 }[a.t.dir] - { down: 0, flat: 1, up: 2 }[b.t.dir]) || a.n.localeCompare(b.n));
+    exHtml += `
+      <div class="graph-card">
+        <div class="graph-section-title">Lift trends · last 8 weeks</div>
+        ${trends.length ? trends.map(({ n, t }) => `
+          <div class="trend-row" onclick="selectGraphEx('${n.replace(/'/g, "\\'")}')">
+            <span>${n}</span>
+            <span class="trend-sessions">${t.sessions} sessions</span>
+            <span class="trend-val trend-${t.dir}">${TREND_ARROW[t.dir]} ${t.label}</span>
+          </div>`).join('')
+        : `<div class="graph-empty">No lift has 2+ sessions in the last 8 weeks yet.</div>`}
       </div>`;
   }
 
@@ -3172,14 +3777,15 @@ function renderGraphs() {
           <div class="graph-stat"><div class="graph-stat-val" style="color:var(--green)">+${gained}</div><div class="graph-stat-lbl">Gained (kg)</div></div>
           <div class="graph-stat"><div class="graph-stat-val">${toGo > 0 ? toGo : 0}</div><div class="graph-stat-lbl">To Goal (kg)</div></div>
         </div>
-        ${buildProgressChart(allWeights.map(w => ({ date: w.date, weight: w.weight })), { gradId: 'bwGrad', color: '#30d158', goalVal: WEIGHT_GOAL })}
+        ${buildProgressChart(allWeights.map(w => ({ date: w.date, weight: w.weight })), { gradId: 'bwGrad', color: '#30d158', goalVal: WEIGHT_GOAL, overlay: trendSeries() })}
+        ${allWeights.length > 2 ? `<div class="chart-legend"><span><i style="background:#30d158"></i>weigh-ins</span><span><i style="background:#fff"></i>7-day trend</span></div>` : ''}
       </div>`;
   }
 
   container.innerHTML = exHtml + bwHtml;
 }
 
-function buildProgressChart(data, { gradId = 'grad', color = '#ff3b30', goalVal = null } = {}) {
+function buildProgressChart(data, { gradId = 'grad', color = '#ff3b30', goalVal = null, overlay = null } = {}) {
   const W = 300, H = 160, PL = 36, PR = goalVal ? 30 : 10, PT = 20, PB = 28;
   const chartW = W - PL - PR;
   const chartH = H - PT - PB;
@@ -3189,8 +3795,15 @@ function buildProgressChart(data, { gradId = 'grad', color = '#ff3b30', goalVal 
   const maxV   = Math.max(...vals, goalVal || 0) + spread * 0.15;
   const range  = maxV - minV || 1;
 
-  const toX = i => data.length < 2 ? PL + chartW / 2 : PL + (i / (data.length - 1)) * chartW;
+  // x by date so gaps between sessions show as gaps rather than being squeezed out.
+  const tOf  = d => new Date(d.date + 'T12:00:00').getTime();
+  const t0   = tOf(data[0]);
+  const span = Math.max(1, tOf(data[data.length - 1]) - t0);
+  const toX = i => data.length < 2 ? PL + chartW / 2 : PL + ((tOf(data[i]) - t0) / span) * chartW;
   const toY = v => PT + ((maxV - v) / range) * chartH;
+  const overlayLine = overlay && overlay.length > 2
+    ? `<polyline points="${overlay.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ')}" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" opacity="0.85"/>`
+    : '';
 
   // Area fill path
   const linePts  = data.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
@@ -3241,6 +3854,7 @@ function buildProgressChart(data, { gradId = 'grad', color = '#ff3b30', goalVal 
       <path d="${areaPath}" fill="url(#${gradId})"/>
       <polyline points="${linePts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
       ${dots}
+      ${overlayLine}
       ${lastLabel}
       ${xLabels}
       ${yLabels}
