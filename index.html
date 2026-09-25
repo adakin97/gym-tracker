@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=6');
+    navigator.serviceWorker.register('sw.js?v=7');
   }
 </script>
 <style>
@@ -32,7 +32,7 @@
 /* ── Morning posture block (added 2026-08-18) ─────────────────────────────────────────────
    Deliberately its own card above the workout, and rendered for every day including rest
    days, because it is a daily habit rather than part of the training programme. Collapsed
-   to a single line once all four are ticked, so it stops taking up space for the rest of
+   to a single line once all three are ticked, so it stops taking up space for the rest of
    the day. */
 .posture-card {
   background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
@@ -1931,7 +1931,7 @@ function renderPosture() {
       <div class="posture-head" onclick="togglePostureOpen()">
         <div>
           <div class="posture-title">\u{1F9CD} Morning posture</div>
-          <div class="posture-sub">Band, door frame, floor \u00b7 about 10 minutes \u00b7 in order</div>
+          <div class="posture-sub">Foam roller, door frame, band \u00b7 about 5 minutes \u00b7 in order</div>
         </div>
         <span class="posture-count ${allDone ? 'done' : ''}">${count}/${POSTURE_REQUIRED}</span>
       </div>
@@ -3241,20 +3241,19 @@ const WEIGHT_GOAL  = 75;
 // food/calorie surface is gated off behind this one flag rather than deleted: flip it back to
 // true to restore the fuel strip, the Gain tab's food cards, the Recipes tab and the daily note.
 // Weight, trend, rate, projection and all workout tracking are unaffected.
-// ── Morning posture block (added 2026-08-18) ───────────────────────────────────────────────
-// Four band exercises for desk posture, done daily in the morning, deliberately kept OUT of
-// the WORKOUTS object: this is low-load daily habit work, not training volume, and mixing it
-// into a session would corrupt the volume totals and the overload nudge. Selection targets the
-// four things that actually go wrong sitting at a desk, with no duplication between them:
-// rounded shoulders, internally rotated shoulders, a stiff/flexed thoracic spine, forward head.
+// ── Morning posture block (added 2026-08-18, cut to three on 2026-09-25) ───────────────────
+// Daily morning posture work, deliberately kept OUT of the WORKOUTS object: low-load habit work,
+// not training volume, and mixing it into a session would corrupt the volume totals and the
+// progression suggestions. Built to the AthleanX rounded-shoulders protocol, in its order:
+// mobilise the thoracic spine, stretch what is tight, strengthen what is weak. Alex cut it to
+// one exercise per stage (foam roller extension, doorway slide, band pull-apart); the dropped
+// ones were the prone roll-back, pitcher's stretch and band face pull to overhead.
 const POSTURE_STAGES = [
   {
     title: 'Mobilise the thoracic spine',
     note:  'This comes first, and not at the shoulders. A restricted mid-back is what drags the shoulders forward.',
     items: [
-      { name: 'Prone Roll-Back', dose: '5 each side', imgId: null,
-        why: 'Face down, arms stretched overhead at about 45 degrees. Roll backwards onto one side and let the arms stay high. Rotates the thoracic spine and moves it into extension at the same time.' },
-      { name: 'Foam Roller Extension', dose: '60 sec', imgId: 'Rhomboids-SMR/0.jpg', optional: true,
+      { name: 'Foam Roller Extension', dose: '60 sec', imgId: 'Rhomboids-SMR/0.jpg',
         why: 'On your back, roller under the shoulder blades, a med ball or plate held on your chest. The extra weight forces the mid-back into extension over the roller.' },
     ],
   },
@@ -3264,24 +3263,20 @@ const POSTURE_STAGES = [
     items: [
       { name: 'Doorway Slide', dose: '30-45 sec each side', imgId: null,
         why: 'Front of the shoulder against the door frame so the frame pushes the shoulder blade back. Retract both blades together, then slide that hand up the frame.' },
-      { name: "Pitcher's Stretch", dose: '30-45 sec each side', imgId: null,
-        why: 'Take up the position of a pitcher about to throw, arm back and elbow bent, and let the front of the shoulder open out. Same muscles as the doorway stretch from a different angle.' },
     ],
   },
   {
     title: 'Strengthen what is weak',
     note:  'Mid-back and lower traps. Every rep slow and deliberate. Think 10 sets of 1 rather than 1 set of 10.',
     items: [
-      { name: 'Band Face Pull to Overhead', dose: '2 x 10 slow', imgId: 'Face_Pull/0.jpg',
-        why: 'Anchor at chin height. Drive with the backs of the hands, elbows held at 90 degrees, band to your face. Then raise the arms slowly overhead to hit the lower traps, hold a second, and reverse it.' },
       { name: 'High-to-Low Band Pull-Apart', dose: '2 x 10 slow', imgId: 'Band_Pull_Apart/0.jpg',
         why: 'Anchor high, pull down and apart, externally rotating as you go so the thumbs finish pointing away from each other.' },
     ],
   },
 ];
 
-// Flattened for ticking and counting. `optional` items (kit Alex may not own) are excluded from the
-// completion target, otherwise a missing foam roller would make 100% unreachable and kill the streak.
+// Flattened for ticking and counting. An item marked `optional` (none at present) is left out of the
+// completion target, so kit Alex may not own can never make 100% unreachable and kill the streak.
 const POSTURE = POSTURE_STAGES.flatMap(st => st.items);
 const POSTURE_REQUIRED = POSTURE.filter(ex => !ex.optional).length;
 

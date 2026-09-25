@@ -6,6 +6,11 @@
 
 ## Pick up here (next session)
 
+**2026-09-25 (later): posture block cut to three, one per stage.** Foam Roller Extension (now required, no
+longer optional, so Alex has a roller), Doorway Slide, High-to-Low Band Pull-Apart. Dropped: Prone Roll-Back,
+Pitcher's Stretch, Band Face Pull to Overhead. Target 3/3; stage order kept; subtitle "about 5 minutes". Names
+unchanged, so existing ticks still count. No streak was lost (only 19 Aug had any ticks). SW `gym-v7`.
+
 **2026-09-25: switched to 4 shorter full-body sessions a week. SHIPPED.** After one 3-day session Alex asked
 for shorter sessions on 4 days. `WORKOUTS` is now keys 1/2/4/6 = Full Body A/B/C/D (Mon/Tue/Thu/Sat default),
 4 exercises each, `SESSIONS_PER_WEEK = 4`, weekly volume unchanged (44 sets: 12/11/11/10, ~40/40/40/25 min).
@@ -480,6 +485,7 @@ const SESSIONS_PER_WEEK = 4, BREAK_DAYS = 10, PROGRAMME_START = '2026-09-21', CU
 
 | Date | Changes |
 |------|---------|
+| 2026-09-25 | Posture block cut to three (Foam Roller Extension, Doorway Slide, High-to-Low Band Pull-Apart), one per stage, all required. SW `gym-v7`. |
 | 2026-09-25 | **4 shorter full-body sessions (A-D, Mon/Tue/Thu/Sat), 4 exercises each, same weekly volume.** Programmes date-versioned (`PROGRAMMES`, `findWorkout(name, dateStr)`) since 3-day and 4-day share names; today opens as the logged session once anything is logged. Fixed a contradictory "fell to X reps, use the same weight" suggestion. SW `gym-v6`. |
 | 2026-09-24 | **Programme and progression rebuilt from a 6-month log review.** 3-day full body (A/B/C, Mon/Wed/Fri) replaces Upper/Lower, old split kept as `LEGACY_WORKOUTS` for past dates; stale old-split week plans ignored. Double progression (`suggestLoad`) replaces the +2.5 kg nudge; live too-heavy/too-light set feedback; return-from-break loads; reps required to log. Today tab: weigh-in prompt, This-week card (x/3, streak, days since last session, fractional sets per muscle vs plan and 4-week avg), catch-up "Train now" button on behind rest days. Graphs: e1RM, lift trends, date-based x, trend line. Gain: 0.2-0.35 kg/wk band, goal 75 kg. Tempo removed. Fixes: `extraSets` leak, added rows lost on re-render, `nth-child` addSet lookup. SW `gym-v5`. Verified in a stubbed harness seeded with all 595 real sets; not on phone. |
 | 2026-08-18 | **Nutrition paused behind `NUTRITION_ENABLED = false`** (Alex moved to MyFitnessPal): fuel strip, Gain-tab food cards, Recipes tab, rest-day and complete-banner calorie stats, and History food/note cards all gated off rather than deleted; recipe seeding skipped so nothing writes to Firestore while paused; no Firestore data removed. **Added the morning posture block, built to the AthleanX rounded-shoulders protocol Alex supplied**: three ordered stages (mobilise the thoracic spine, stretch pec minor/subscapularis, strengthen mid-back and lower traps), six items of which the foam-roller drill is optional and excluded from the 5/5 target so a missing roller cannot kill the streak, plus the tennis-ball desk habit as a footer note. Kept out of `WORKOUTS` so it never enters training volume. Tick-off, collapse-when-done, streak that tolerates an unfinished today. An earlier four-exercise version from the same session was superseded by the protocol. New collection `users/{uid}/posture/{date}`. Each row carries a 54px thumbnail from free-exercise-db where an honest match exists (`Rhomboids-SMR`, `Face_Pull`, `Band_Pull_Apart`, 3 of 6); the prone roll-back, doorway slide and pitcher's stretch have no match in the database and render a dashed placeholder, which is also the `onerror` fallback. Service worker bumped `gym-v3` → `gym-v4`. Logic unit-tested; card states screenshotted in-browser including the loaded thumbnails. **Shipped: committed `097d645`, pushed to `main`, Pages build confirmed `built` and the deployed files fetched back to verify.** |
