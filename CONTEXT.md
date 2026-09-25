@@ -1,10 +1,38 @@
 # Gym Tracker App — Context
 
-> **Last updated:** 2026-09-24
+> **Last updated:** 2026-09-25
 
 ---
 
 ## Pick up here (next session)
+
+**2026-09-25: switched to 4 shorter full-body sessions a week. SHIPPED.** After one 3-day session Alex asked
+for shorter sessions on 4 days. `WORKOUTS` is now keys 1/2/4/6 = Full Body A/B/C/D (Mon/Tue/Thu/Sat default),
+4 exercises each, `SESSIONS_PER_WEEK = 4`, weekly volume unchanged (44 sets: 12/11/11/10, ~40/40/40/25 min).
+Every session still starts with a leg exercise. D is the short day (seated leg curl, leg extensions, lateral
+raises, pushdowns). Planned fractional sets: Quads 8, Hamstrings 6, Chest 6, Back 9, Shoulders 9, Biceps 6.5,
+Triceps 8.5.
+
+**Programmes are now date-versioned** because the 3-day and 4-day versions share session names:
+`PROGRAMMES = [{from, workouts}]` (Upper/Lower, `FULL_BODY_3` from 2026-09-24, current from `CURRENT_FROM =
+'2026-09-26'`), and `findWorkout(name, dateStr)` resolves against the programme in force on that date first.
+Callers pass the date (`getWorkoutForDate`, date pills, `selectDate`). **Today now opens as the logged session
+once anything is logged** (previously only past dates did), and today's date pill shows it with a tick; without
+that, 25 Sep (3-day Full Body C logged, Friday now a default rest day) opened as a rest day.
+
+Also fixed: `suggestLoad` said "12.5 kg fell to 8 reps. Use 12.5 kg" when other sets at the same load were in
+range; that case is now "stay at X, aim for lo+". SW `gym-v6`.
+
+**Observed in the first real session (25 Sep, 3-day C):** shoulder press, pull-ups, laterals (8 x 6, too heavy
+for 12-20) and pushdowns logged; **both leg exercises skipped**, the same pattern the review found. Worth
+watching: the week card's Quads/Hamstrings rows are the check.
+
+Verified in the harness with 606 real sets (595 + the 25 Sep session): 30 checks pass (date-versioned lookups,
+default plan, stale plan, rotation, coverage, progression cases, streak at 4/wk), a full D session logs end to end,
+phone-width render checked, no console errors.
+
+---
+
 
 **2026-09-24 session: programme replaced, progression/consistency rebuilt. SHIPPED.** Driven by a review of
 all 595 logged sets (full write-up: `../Training-Review-2026-09-24.md`). Finding: real progress 16 Mar-28 Apr
@@ -364,27 +392,28 @@ Functions: `loadRecipes()`, `addRecipeUI()`, `deleteRecipe()`, `logRecipe()`, `r
 
 ```js
 const WORKOUTS = {
-  1: { name: 'Full Body A', short: 'Full A', focus: 'Full body', exercises: [...] },  // Monday
-  3: { name: 'Full Body B', short: 'Full B', focus: 'Full body', exercises: [...] },  // Wednesday
-  5: { name: 'Full Body C', short: 'Full C', focus: 'Full body', exercises: [...] },  // Friday
+  1: { name: 'Full Body A', short: 'Full A', focus: 'Full body', exercises: [...] },              // Monday
+  2: { name: 'Full Body B', short: 'Full B', focus: 'Full body', exercises: [...] },              // Tuesday
+  4: { name: 'Full Body C', short: 'Full C', focus: 'Full body', exercises: [...] },              // Thursday
+  6: { name: 'Full Body D', short: 'Full D', focus: 'Legs, shoulders, arms', exercises: [...] },  // Saturday
 };
-const LEGACY_WORKOUTS = [ /* Upper A, Lower A, Upper B, Lower B: March-September 2026 */ ];
+const PROGRAMMES = [ { from: '0000-00-00', workouts: UPPER_LOWER },
+                     { from: '2026-09-24', workouts: FULL_BODY_3 },
+                     { from: CURRENT_FROM, workouts: Object.values(WORKOUTS) } ];
 ```
 
-Each exercise: `{ name, muscle, sets, reps, rest, imgId }` (tempo dropped 2026-09-24). `short` is the date-pill label.
+Each exercise: `{ name, muscle, sets, reps, rest, imgId }`. `short` is the date-pill label.
 
-**Current programme (from 2026-09-24):**
+**Current programme (from 2026-09-26):**
 
-| Full Body A | Full Body B | Full Body C |
-|---|---|---|
-| Leg Press 3x8-12 (180s) | Machine Deadlift 3x8-10 (180s) | Bulgarian Split Squats 3x8-12 (150s) |
-| Incline Dumbbell Press 3x8-12 (150s) | Dumbbell Bench Press 3x8-12 (150s) | Dumbbell Shoulder Press 3x8-12 (150s) |
-| Lat Pulldown 3x8-12 (150s) | Seated Cable Rows 3x8-12 (150s) | Pull-ups (assisted) 3x6-10 (150s) |
-| Side Lateral Raise 3x12-20 (90s) | Seated Leg Curl 3x10-15 (90s) | Leg Extensions 2x12-15 (90s) |
-| Overhead Cable Triceps Extension 2x10-15 (90s) | Incline Dumbbell Curl 3x10-15 (90s) | Side Lateral Raise 2x12-20 (90s) |
-| | | Cable Tricep Pushdowns 2x10-15 (90s) |
+| Full Body A (Mon) | Full Body B (Tue) | Full Body C (Thu) | Full Body D (Sat) |
+|---|---|---|---|
+| Leg Press 3x8-12 (180s) | Machine Deadlift 3x8-10 (180s) | Bulgarian Split Squats 3x8-12 (150s) | Seated Leg Curl 3x10-15 (90s) |
+| Incline Dumbbell Press 3x8-12 (150s) | Dumbbell Shoulder Press 3x8-12 (150s) | Dumbbell Bench Press 3x8-12 (150s) | Leg Extensions 2x12-15 (90s) |
+| Lat Pulldown 3x8-12 (150s) | Seated Cable Rows 3x8-12 (150s) | Pull-ups (assisted) 3x6-10 (150s) | Side Lateral Raise 3x12-20 (90s) |
+| Side Lateral Raise 3x12-20 (90s) | Incline Dumbbell Curl 2x10-15 (90s) | Overhead Cable Triceps Extension 2x10-15 (90s) | Cable Tricep Pushdowns 2x10-15 (90s) |
 
-Planned fractional sets/week: Quads 8, Hamstrings 6, Chest 6, Back 9, Shoulders 8, Biceps 7.5, Triceps 8.5.
+The 3-day version (24-25 Sep) is kept as `FULL_BODY_3`; the Upper/Lower split as `UPPER_LOWER`.
 
 ### Exercise Library
 
@@ -430,7 +459,7 @@ throughout (suggestions, feedback, trends, charts).
 ```js
 const WEIGHT_GOAL = 75;                  // kg (was 70 until 2026-09-24)
 const RATE_MIN = 0.2, RATE_MAX = 0.35;   // kg/week target band (was 0.6-0.8)
-const SESSIONS_PER_WEEK = 3, BREAK_DAYS = 10, PROGRAMME_START = '2026-09-21';
+const SESSIONS_PER_WEEK = 4, BREAK_DAYS = 10, PROGRAMME_START = '2026-09-21', CURRENT_FROM = '2026-09-26';
 ```
 
 ---
@@ -451,6 +480,7 @@ const SESSIONS_PER_WEEK = 3, BREAK_DAYS = 10, PROGRAMME_START = '2026-09-21';
 
 | Date | Changes |
 |------|---------|
+| 2026-09-25 | **4 shorter full-body sessions (A-D, Mon/Tue/Thu/Sat), 4 exercises each, same weekly volume.** Programmes date-versioned (`PROGRAMMES`, `findWorkout(name, dateStr)`) since 3-day and 4-day share names; today opens as the logged session once anything is logged. Fixed a contradictory "fell to X reps, use the same weight" suggestion. SW `gym-v6`. |
 | 2026-09-24 | **Programme and progression rebuilt from a 6-month log review.** 3-day full body (A/B/C, Mon/Wed/Fri) replaces Upper/Lower, old split kept as `LEGACY_WORKOUTS` for past dates; stale old-split week plans ignored. Double progression (`suggestLoad`) replaces the +2.5 kg nudge; live too-heavy/too-light set feedback; return-from-break loads; reps required to log. Today tab: weigh-in prompt, This-week card (x/3, streak, days since last session, fractional sets per muscle vs plan and 4-week avg), catch-up "Train now" button on behind rest days. Graphs: e1RM, lift trends, date-based x, trend line. Gain: 0.2-0.35 kg/wk band, goal 75 kg. Tempo removed. Fixes: `extraSets` leak, added rows lost on re-render, `nth-child` addSet lookup. SW `gym-v5`. Verified in a stubbed harness seeded with all 595 real sets; not on phone. |
 | 2026-08-18 | **Nutrition paused behind `NUTRITION_ENABLED = false`** (Alex moved to MyFitnessPal): fuel strip, Gain-tab food cards, Recipes tab, rest-day and complete-banner calorie stats, and History food/note cards all gated off rather than deleted; recipe seeding skipped so nothing writes to Firestore while paused; no Firestore data removed. **Added the morning posture block, built to the AthleanX rounded-shoulders protocol Alex supplied**: three ordered stages (mobilise the thoracic spine, stretch pec minor/subscapularis, strengthen mid-back and lower traps), six items of which the foam-roller drill is optional and excluded from the 5/5 target so a missing roller cannot kill the streak, plus the tennis-ball desk habit as a footer note. Kept out of `WORKOUTS` so it never enters training volume. Tick-off, collapse-when-done, streak that tolerates an unfinished today. An earlier four-exercise version from the same session was superseded by the protocol. New collection `users/{uid}/posture/{date}`. Each row carries a 54px thumbnail from free-exercise-db where an honest match exists (`Rhomboids-SMR`, `Face_Pull`, `Band_Pull_Apart`, 3 of 6); the prone roll-back, doorway slide and pitcher's stretch have no match in the database and render a dashed placeholder, which is also the `onerror` fallback. Service worker bumped `gym-v3` → `gym-v4`. Logic unit-tested; card states screenshotted in-browser including the loaded thumbnails. **Shipped: committed `097d645`, pushed to `main`, Pages build confirmed `built` and the deployed files fetched back to verify.** |
 | 2026-08-14 | **Shipped.** Committed `4ebf6a1` and pushed to `main`; live at adakin97.github.io/gym-tracker. Confirmed the Firestore rules are a genuine `users/{uid}/{document=**}` wildcard (Alex pasted them from the console), so `nutrition` and `recipes` needed no rule change. Service worker cache bumped `gym-v2` → `gym-v3` in both `sw.js` and the `index.html` registration string, so phones stop serving the stale cached build. This is the two-session Gain-tab/hardgainer rebuild described above going live for the first time. |

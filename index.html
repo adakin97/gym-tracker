@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=5');
+    navigator.serviceWorker.register('sw.js?v=6');
   }
 </script>
 <style>
@@ -1152,18 +1152,21 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 
 // ── Workout data ──────────────────────────────────────────────────────────────
-// ── Programme (from 2026-09-24): 3-day full body ─────────────────────────────────
-// Replaced the 4-day Upper/Lower split after a review of 6 months of logs (see
-// Gym 2026 Claude/Training-Review-2026-09-24.md). Upper/Lower only works if all four days
-// happen; in practice the lower days were the ones skipped, so legs got 13 sets in five
-// months. Full body puts legs, a push and a pull in every session, so a 2-session week still
-// trains everything. Volume per muscle is what drives growth, not frequency (Pelland 2024),
-// so three sessions lose nothing against four.
-//   - First three lifts are compounds: longer rest (Schoenfeld 2016, 3 min beat 1 min).
+// ── Programme (from 2026-09-26): 4-day full body, shorter sessions ─────────────────
+// History: Upper/Lower (Mar-Sep 2026) stalled because the lower days were the ones skipped
+// (13 leg sets in five months; see Gym 2026 Claude/Training-Review-2026-09-24.md). It became a
+// 3-day full body on 24 Sep; after one session Alex asked for shorter sessions on 4 days instead.
+// This keeps what fixed the split: every session STARTS with a leg exercise, so a missed day
+// never zeroes a muscle and legs cannot be quietly left to the end. Weekly volume is unchanged
+// (44 sets); it is just spread over four ~30-40 minute sessions of 4 exercises. Growth follows
+// hard sets per muscle per week, not sets per exercise or sessions per week (Pelland 2024;
+// Krieger 2010 for 2-3 sets per exercise being productive).
+//   - Compounds first with longer rest (Schoenfeld 2016, 3 min beat 1 min).
 //   - Accessories lean towards the stretched position (Maeo 2023 overhead triceps, seated
 //     leg curl, incline curl), plus lateral raises for shoulder width.
+//   - D is the short day: leg isolation plus delts and triceps.
 //   - Progression is double progression, driven by the rep range: see suggestLoad().
-// Keys are the default day of week (Mon/Wed/Fri); any day can still be replanned.
+// Keys are the default day of week (Mon/Tue/Thu/Sat); any day can still be replanned.
 const WORKOUTS = {
   1: {
     name: 'Full Body A', short: 'Full A', focus: 'Full body',
@@ -1172,38 +1175,43 @@ const WORKOUTS = {
       { name: 'Incline Dumbbell Press',           muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Incline_Dumbbell_Press/0.jpg' },
       { name: 'Lat Pulldown',                     muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
       { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
-      { name: 'Overhead Cable Triceps Extension', muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Cable_Rope_Overhead_Triceps_Extension/0.jpg' },
     ]
   },
-  3: {
+  2: {
     name: 'Full Body B', short: 'Full B', focus: 'Full body',
     exercises: [
       { name: 'Machine Deadlift',                 muscle: 'Hamstrings', sets: 3, reps: '8-10',  rest: '180 sec', imgId: 'Leverage_Deadlift/0.jpg' },
-      { name: 'Dumbbell Bench Press',             muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Bench_Press/0.jpg' },
+      { name: 'Dumbbell Shoulder Press',          muscle: 'Shoulders',  sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
       { name: 'Seated Cable Rows',                muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Seated_Cable_Rows/0.jpg' },
-      { name: 'Seated Leg Curl',                  muscle: 'Hamstrings', sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Seated_Leg_Curl/0.jpg' },
-      { name: 'Incline Dumbbell Curl',            muscle: 'Biceps',     sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Incline_Dumbbell_Curl/0.jpg' },
+      { name: 'Incline Dumbbell Curl',            muscle: 'Biceps',     sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Incline_Dumbbell_Curl/0.jpg' },
     ]
   },
-  5: {
+  4: {
     name: 'Full Body C', short: 'Full C', focus: 'Full body',
     exercises: [
       { name: 'Bulgarian Split Squats',           muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
-      { name: 'Dumbbell Shoulder Press',          muscle: 'Shoulders',  sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+      { name: 'Dumbbell Bench Press',             muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Bench_Press/0.jpg' },
       { name: 'Pull-ups',                         muscle: 'Back',       sets: 3, reps: '6-10',  rest: '150 sec', imgId: 'Pullups/0.jpg' },
+      { name: 'Overhead Cable Triceps Extension', muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Cable_Rope_Overhead_Triceps_Extension/0.jpg' },
+    ]
+  },
+  6: {
+    name: 'Full Body D', short: 'Full D', focus: 'Legs, shoulders, arms',
+    exercises: [
+      { name: 'Seated Leg Curl',                  muscle: 'Hamstrings', sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Seated_Leg_Curl/0.jpg' },
       { name: 'Leg Extensions',                   muscle: 'Quads',      sets: 2, reps: '12-15', rest: '90 sec',  imgId: 'Leg_Extensions/0.jpg' },
-      { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 2, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+      { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
       { name: 'Cable Tricep Pushdowns',           muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
     ]
   }
 };
-const SESSIONS_PER_WEEK = 3;
-const PROGRAMME_START   = '2026-09-21';   // Monday of the week the full-body plan replaced Upper/Lower
+const SESSIONS_PER_WEEK = 4;
+const PROGRAMME_START   = '2026-09-21';   // Monday of the week full body replaced Upper/Lower
+const CURRENT_FROM      = '2026-09-26';   // first day the 4-day version applies
 
-// The Upper/Lower split used from March to September 2026. Kept, not deleted, so past dates
-// still open as the session that was actually done, and its exercises stay in the swap list.
-// Never offered in the picker or the week planner.
-const LEGACY_WORKOUTS = [
+// Earlier programmes, kept so a past date opens as the session that was actually done (and
+// its lifts stay in the swap list). Never offered in the picker or the week planner.
+const UPPER_LOWER = [
   { name: 'Upper A', focus: 'Strength', exercises: [
     { name: 'Barbell Bench Press',     muscle: 'Chest',      sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
     { name: 'T-Bar Rows',              muscle: 'Back',       sets: 4, reps: '6-8',   rest: '120 sec', imgId: 'Bent_Over_Barbell_Row/0.jpg' },
@@ -1233,13 +1241,49 @@ const LEGACY_WORKOUTS = [
     { name: 'Calf Raises',             muscle: 'Calves',     sets: 4, reps: '15-20', rest: '45 sec',  imgId: 'Standing_Calf_Raises/0.jpg' },
   ]},
 ];
+// The 3-day full body used 24-25 Sep 2026 (one session logged, Full Body C on 25 Sep). Same
+// session names as the 4-day version, so lookups by name go through the date (findWorkout).
+const FULL_BODY_3 = [
+  { name: 'Full Body A', short: 'Full A', focus: 'Full body', exercises: [
+    { name: 'Leg Press',                        muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '180 sec', imgId: 'Leg_Press/0.jpg' },
+    { name: 'Incline Dumbbell Press',           muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Incline_Dumbbell_Press/0.jpg' },
+    { name: 'Lat Pulldown',                     muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+    { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+    { name: 'Overhead Cable Triceps Extension', muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Cable_Rope_Overhead_Triceps_Extension/0.jpg' },
+  ]},
+  { name: 'Full Body B', short: 'Full B', focus: 'Full body', exercises: [
+    { name: 'Machine Deadlift',                 muscle: 'Hamstrings', sets: 3, reps: '8-10',  rest: '180 sec', imgId: 'Leverage_Deadlift/0.jpg' },
+    { name: 'Dumbbell Bench Press',             muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Bench_Press/0.jpg' },
+    { name: 'Seated Cable Rows',                muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Seated_Cable_Rows/0.jpg' },
+    { name: 'Seated Leg Curl',                  muscle: 'Hamstrings', sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Seated_Leg_Curl/0.jpg' },
+    { name: 'Incline Dumbbell Curl',            muscle: 'Biceps',     sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Incline_Dumbbell_Curl/0.jpg' },
+  ]},
+  { name: 'Full Body C', short: 'Full C', focus: 'Full body', exercises: [
+    { name: 'Bulgarian Split Squats',           muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+    { name: 'Dumbbell Shoulder Press',          muscle: 'Shoulders',  sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+    { name: 'Pull-ups',                         muscle: 'Back',       sets: 3, reps: '6-10',  rest: '150 sec', imgId: 'Pullups/0.jpg' },
+    { name: 'Leg Extensions',                   muscle: 'Quads',      sets: 2, reps: '12-15', rest: '90 sec',  imgId: 'Leg_Extensions/0.jpg' },
+    { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 2, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+    { name: 'Cable Tricep Pushdowns',           muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
+  ]},
+];
+const PROGRAMMES = [
+  { from: '0000-00-00',    workouts: UPPER_LOWER },
+  { from: '2026-09-24',    workouts: FULL_BODY_3 },
+  { from: CURRENT_FROM,    workouts: Object.values(WORKOUTS) },
+];
 
-// Resolve a workout by name, current programme first, then the old split (for past dates).
-function findWorkout(name) {
+// Resolve a workout by name as it was on a given date: the programme in force that day first,
+// then the others newest first (so an old name still resolves on any date).
+function findWorkout(name, dateStr = todayStr) {
   if (!name) return null;
-  return Object.values(WORKOUTS).find(w => w.name === name)
-      || LEGACY_WORKOUTS.find(w => w.name === name)
-      || null;
+  const active = PROGRAMMES.filter(p => p.from <= dateStr).pop();
+  const order  = [active, ...PROGRAMMES.slice().reverse().filter(p => p !== active)];
+  for (const p of order) {
+    const w = p.workouts.find(w => w.name === name);
+    if (w) return w;
+  }
+  return null;
 }
 
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -1379,7 +1423,7 @@ const ALL_EXERCISES = (() => {
   const seen = new Set(), out = [];
   // First add all workout exercises (current programme, then the old split so its lifts can
   // still be swapped back in and looked up by name)
-  [...Object.values(WORKOUTS), ...LEGACY_WORKOUTS].forEach(w => w.exercises.forEach(ex => {
+  PROGRAMMES.slice().reverse().flatMap(p => p.workouts).forEach(w => w.exercises.forEach(ex => {
     if (!seen.has(ex.name)) { seen.add(ex.name); out.push({ ...ex }); }
   }));
   // Then add library exercises
@@ -1397,7 +1441,7 @@ function getMondayStr(dateStr) {
   return d.toISOString().split('T')[0];
 }
 
-const DEFAULT_PLAN = { 0: null, 1: 'Full Body A', 2: null, 3: 'Full Body B', 4: null, 5: 'Full Body C', 6: null };
+const DEFAULT_PLAN = { 0: null, 1: 'Full Body A', 2: 'Full Body B', 3: null, 4: 'Full Body C', 5: null, 6: 'Full Body D' };
 const CARDIO_TYPES  = ['Swim', 'Run'];
 const WORKOUT_NAMES = [...Object.values(WORKOUTS).map(w => w.name), ...CARDIO_TYPES];
 
@@ -1412,7 +1456,7 @@ function getWeekPlan(mondayStr) {
   }
   // A plan saved for this week or later under the old Upper/Lower split was laid out for
   // four sessions on different days. Mapping it day by day leaves its rest days sitting on
-  // the new Mon/Wed/Fri slots, so the whole plan is treated as stale and the default applies.
+  // the new session days, so the whole plan is treated as stale and the default applies.
   const stale = mondayStr >= PROGRAMME_START &&
     Object.values(merged).some(v => v && !WORKOUT_NAMES.includes(v));
   return stale ? { ...DEFAULT_PLAN } : merged;
@@ -1426,7 +1470,7 @@ function getWorkoutForDate(dateStr) {
   const wkName = plan[dow];
   if (!wkName) return null;
   if (CARDIO_TYPES.includes(wkName)) return { name: wkName, cardio: true };
-  return findWorkout(wkName);
+  return findWorkout(wkName, dateStr);
 }
 
 function renderDateSelector() {
@@ -1447,11 +1491,12 @@ function renderDateSelector() {
     const hasLogs  = !isFuture && allLogs.some(l => l.date === ds);
     // For past dates prefer what was actually logged over the scheduled plan
     let wo;
-    if (!isFuture && !isToday) {
+    // Past days, and today once something is logged, show what was actually done
+    if (!isFuture && (!isToday || hasLogs)) {
       const loggedName = allLogs.find(l => l.date === ds)?.workout || null;
       const cardioEntry = allCardio.find(c => c.date === ds);
       wo = loggedName
-        ? (findWorkout(loggedName) || { name: loggedName })
+        ? (findWorkout(loggedName, ds) || { name: loggedName })
         : cardioEntry ? { name: cardioEntry.type, cardio: true }
         : getWorkoutForDate(ds);
     } else {
@@ -1679,11 +1724,12 @@ function selectDate(dateStr, dow) {
   scheduledDow = dow;
   clearSwaps();
 
-  if (dateStr < todayStr) {
-    // Past date: derive workout and swaps from what was actually logged
-    const dateLogs = allLogs.filter(l => l.date === dateStr);
-    const loggedWorkoutName = dateLogs[0]?.workout || null;
-    workout = findWorkout(loggedWorkoutName);
+  const dateLogs = allLogs.filter(l => l.date === dateStr);
+  if (dateStr < todayStr || (dateStr === todayStr && dateLogs.some(l => l.workout))) {
+    // Past date, or today once a session has been logged: derive workout and swaps from what
+    // was actually logged, in the programme that was in force on that date
+    const loggedWorkoutName = dateLogs.find(l => l.workout)?.workout || null;
+    workout = findWorkout(loggedWorkoutName, dateStr);
     // Restore exercise swaps: any log entry whose exercise name differs from the
     // template exercise at that index was a swap (requires exIdx stored in the log)
     if (workout) {
@@ -2325,8 +2371,13 @@ function suggestLoad(ex) {
     const weight  = inRange.length
       ? fmtKg(assisted ? Math.min(...inRange) : Math.max(...inRange))
       : easier(top);
-    return { ...base, kind: 'heavy', weight,
-      text: `${fmtKg(top)} kg fell to ${minTopReps} reps. Use ${weight} kg on every set, aim for ${range.lo}+` };
+    if (weight !== top) {
+      return { ...base, kind: 'heavy', weight,
+        text: `${fmtKg(top)} kg fell to ${minTopReps} reps. Use ${weight} kg on every set, aim for ${range.lo}+` };
+    }
+    // Some sets at this load were already in range: keep it and bring the short set up.
+    return { ...base, kind: 'same', weight: top,
+      text: `Stay at ${fmtKg(top)} kg on every set, aim for ${range.lo}+ reps` };
   }
 
   // Earned: every set at one weight, all at the top of the range.
@@ -2378,7 +2429,7 @@ function weekStreak() {
   for (let mon = addDays(thisMon, -7); weekSessionCount(mon, dates) >= SESSIONS_PER_WEEK; mon = addDays(mon, -7)) streak++;
   return streak;
 }
-// The session after the last full-body one logged (A -> B -> C -> A), A if none yet.
+// The session after the last full-body one logged (A -> B -> C -> D -> A), A if none yet.
 function nextInRotation() {
   const order = Object.entries(WORKOUTS);   // [[dow, workout], ...] in key order: A, B, C
   const last = allLogs
@@ -2579,8 +2630,8 @@ function renderToday() {
     const isToday = selectedDate === todayStr;
     const day = isToday ? dayNutrition(todayStr) : null;
     const short = day ? KCAL_TARGET - day.kcal : null;
-    // The fixed Mon/Wed/Fri days are a default, not the point. If today is a planned rest day
-    // but the week is behind, offer the next session in the A/B/C rotation right here.
+    // The default days are a default, not the point. If today is a planned rest day but the
+    // week is behind, offer the next session in the A/B/C/D rotation right here.
     const next = isToday ? nextInRotation() : null;
     const behind = isToday && weekSessionCount(getMondayStr(todayStr)) < SESSIONS_PER_WEEK;
     const trainedToday = allLogs.some(l => l.date === todayStr);
