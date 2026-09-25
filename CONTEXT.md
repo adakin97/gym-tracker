@@ -6,6 +6,20 @@
 
 ## Pick up here (next session)
 
+**Session closed 2026-09-25. First things next time, in order:**
+
+1. **Did the legs get trained?** Pull this week's and last week's logs (Chrome, signed-in live app,
+   `eval('allLogs')`) and check the Quads/Hamstrings rows. On 25 Sep, the first session on the new plan, both leg
+   exercises were skipped. If that repeats on the 4-day plan, raise it with Alex directly rather than redesigning.
+2. **Sessions per week against 4.** The review's main finding was consistency, not programme design.
+3. **Weigh-ins.** None since 7 Sep as of 25 Sep; the Gain-tab rate needs 4+ in 21 days.
+4. **Blood test** (thyroid + coeliac, from August): still no result recorded.
+5. Still never verified on the phone itself; everything was checked in desktop Chrome and the harness.
+
+**Test harness (kept):** `../Other/test-harness/` runs the real `index.html` with Firebase stubbed and seeded with
+all real logs up to 25 Sep (`fixture.txt`). `python build.py`, then serve the folder and open `index.html` or
+`phone.html` (390px frame). README there. Use it before every push; add new real sessions to `fixture.txt`.
+
 **2026-09-25 (later): posture block cut to three, one per stage.** Foam Roller Extension (now required, no
 longer optional, so Alex has a roller), Doorway Slide, High-to-Low Band Pull-Apart. Dropped: Prone Roll-Back,
 Pitcher's Stretch, Band Face Pull to Overhead. Target 3/3; stage order kept; subtitle "about 5 minutes". Names
