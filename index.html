@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=7');
+    navigator.serviceWorker.register('sw.js?v=8');
   }
 </script>
 <style>
@@ -790,6 +790,24 @@ body {
 .graph-stat-val { font-size: 20px; font-weight: 700; }
 .graph-stat-lbl { font-size: 11px; color: var(--sub); margin-top: 2px; }
 .graph-empty { text-align: center; padding: 24px 0; color: var(--sub); font-size: 13px; }
+.wc-ranges { display: flex; gap: 6px; margin-bottom: 12px; }
+.wc-range {
+  flex: 1; padding: 7px 0; border: none; border-radius: 8px; cursor: pointer;
+  background: var(--card2); color: var(--sub); font-size: 12px; font-weight: 700;
+}
+.wc-range.active { background: var(--accent); color: #fff; }
+.wc-read { min-height: 42px; margin-bottom: 6px; }
+.wc-read-main { font-size: 20px; font-weight: 700; }
+.wc-read-sub { font-size: 12px; font-weight: 500; color: var(--sub); margin-left: 8px; }
+.wc-read-date { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.wc-main, .wc-nav {
+  display: block; width: 100%; overflow: visible;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.wc-main { touch-action: pan-y; cursor: crosshair; }
+.wc-nav { touch-action: none; cursor: grab; margin-top: 8px; }
+.wc-main *, .wc-nav * { pointer-events: none; }
+.wc-hint { font-size: 11px; color: var(--sub); text-align: center; margin-top: 6px; opacity: 0.8; }
 
 /* ── Workout overview card ── */
 .overview-card { background: var(--card); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
@@ -3639,69 +3657,364 @@ function renderGain() {
     ${allWeights.length > 1 ? `
     <div class="weight-chart-card">
       <div class="weight-section-title">Progress Chart</div>
-      ${buildWeightChart()}
+      ${weightChartHtml('gain')}
     </div>` : ''}
     ${allWeights.length ? `
     <div class="weight-history-card">
       <div class="weight-section-title">Recent Entries</div>
       ${histRows}
     </div>` : ''}`;
+  wcDraw('gain');
 }
 
-function buildWeightChart() {
-  const W = 300, H = 140, PL = 36, PR = 24, PT = 12, PB = 28;
-  const chartW = W - PL - PR;
-  const chartH = H - PT - PB;
-  const data   = allWeights;
-  const vals   = data.map(d => d.weight);
-  const minV   = Math.min(...vals, WEIGHT_START) - 1;
-  const maxV   = Math.max(...vals, WEIGHT_GOAL)  + 1;
-  const range  = maxV - minV;
+// ── Body weight chart (Gain and Graphs tabs) ──────────────────────────────────
+// Range buttons, pinch or scroll to zoom, the strip underneath to pan or resize the window,
+// and tap (or hover) for the exact reading, which replaces the summary line above the chart.
+// The y axis fits whatever is on screen, so zooming in shows the small moves. Both tabs share
+// one view, so a zoom carries across.
+const WC_W = 300, WC_H = 176, WC_PL = 30, WC_PR = 10, WC_PT = 16, WC_PB = 24, WC_NAV_H = 30;
+const WC_CW = WC_W - WC_PL - WC_PR;
+const WC_DAY = 864e5;
+const WC_RANGES = [['1M', 30], ['3M', 91], ['6M', 182], ['1Y', 365], ['All', 0]];
+let wcView = null;     // { range: '3M' } follows the latest data; { range: null, start, end } is a manual zoom
+const wcState = {};    // per chart: active pointers, gesture, selected weigh-in
+let wcFrame = null;
 
-  // x by date, not by entry number: weigh-ins are irregular, and spacing them evenly hid a
-  // two-month gap as if it were one day.
-  const t0   = new Date(data[0].date + 'T12:00:00').getTime();
-  const tN   = new Date(data[data.length - 1].date + 'T12:00:00').getTime();
-  const span = Math.max(1, tN - t0);
-  const toX = i => PL + (data.length === 1 ? chartW / 2 : ((new Date(data[i].date + 'T12:00:00').getTime() - t0) / span) * chartW);
-  const toY = v => PT + ((maxV - v) / range) * chartH;
+const wcT = dateStr => new Date(dateStr + 'T12:00:00').getTime();
+const wcFmt = (t, opts) => new Date(t).toLocaleDateString('en-GB', opts);
 
-  const points = data.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
-  const goalY  = toY(WEIGHT_GOAL);
-  // 7-day trend drawn over the raw weigh-ins: the line the rate is actually computed from.
-  const trend  = trendSeries();
-  const trendPts = trend.map((d, i) => `${toX(i)},${toY(d.weight)}`).join(' ');
+function wcBounds() {
+  const lo = wcT(allWeights[0].date) - 2 * WC_DAY;
+  const hi = Math.max(wcT(allWeights[allWeights.length - 1].date), wcT(todayStr)) + 2 * WC_DAY;
+  return [lo, hi];
+}
 
-  const labelIndices = data.length === 1
-    ? [0]
-    : [0, Math.floor((data.length - 1) / 2), data.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+function wcGetView() {
+  const [lo, hi] = wcBounds();
+  if (!wcView) wcView = { range: hi - lo > 100 * WC_DAY ? '3M' : 'All' };
+  if (wcView.range) {
+    const days = WC_RANGES.find(r => r[0] === wcView.range)[1];
+    return [days ? Math.max(lo, hi - days * WC_DAY) : lo, hi];
+  }
+  return [wcView.start, wcView.end];
+}
 
-  const xLabels = labelIndices.map(i => {
-    const d = new Date(data[i].date + 'T12:00:00').toLocaleDateString('en-GB', { day:'numeric', month:'short' });
-    return `<text x="${toX(i)}" y="${H - 6}" text-anchor="middle" fill="#8e8e93" font-size="9">${d}</text>`;
+// clip: trim to the data (resizing an edge); otherwise keep the span and slide it back in (pan, zoom).
+function wcSetView(start, end, clip) {
+  const [lo, hi] = wcBounds();
+  const minSpan = Math.min(5 * WC_DAY, hi - lo);
+  if (clip) { start = Math.max(start, lo); end = Math.min(end, hi); }
+  const span = Math.min(Math.max(end - start, minSpan), hi - lo);
+  if (end - start < minSpan) start = (start + end - span) / 2;
+  start = Math.min(Math.max(start, lo), hi - span);
+  wcView = span >= hi - lo - WC_DAY ? { range: 'All' } : { range: null, start, end: start + span };
+  wcRedrawAll();
+}
+
+function wcSetRange(range) {
+  wcView = { range };
+  Object.values(wcState).forEach(st => { st.tip = null; });
+  wcRedrawAll();
+}
+
+function wcRedrawAll() {
+  if (wcFrame) return;
+  wcFrame = requestAnimationFrame(() => {
+    wcFrame = null;
+    Object.keys(wcState).forEach(wcDraw);
+  });
+}
+
+function weightChartHtml(key) {
+  wcState[key] = { ptrs: new Map(), tip: null };
+  const h = `'${key}'`;
+  return `
+    <div class="wc">
+      <div class="wc-ranges" id="wc-${key}-ranges">
+        ${WC_RANGES.map(([r]) => `<button class="wc-range" data-r="${r}" onclick="wcSetRange('${r}')">${r}</button>`).join('')}
+      </div>
+      <div class="wc-read" id="wc-${key}-read" onclick="wcClearTip(${h})"></div>
+      <svg class="wc-main" id="wc-${key}-svg" viewBox="0 0 ${WC_W} ${WC_H}"
+        onpointerdown="wcDown(event,${h})" onpointermove="wcMove(event,${h})" onpointerup="wcUp(event,${h})"
+        onpointercancel="wcUp(event,${h})" onpointerleave="wcLeave(event,${h})" onwheel="wcWheel(event,${h})"></svg>
+      <svg class="wc-nav" id="wc-${key}-nav" viewBox="0 0 ${WC_W} ${WC_NAV_H}"
+        onpointerdown="wcNavDown(event,${h})" onpointermove="wcNavMove(event,${h})"
+        onpointerup="wcNavUp(event,${h})" onpointercancel="wcNavUp(event,${h})"></svg>
+      <div class="chart-legend">
+        <span><i style="background:var(--accent)"></i>weigh-ins</span>
+        <span><i style="background:#fff"></i>7-day trend</span>
+        <span><i style="background:var(--green)"></i>goal</span>
+      </div>
+      <div class="wc-hint">Tap for a reading · pinch to zoom · drag the strip to move along</div>
+    </div>`;
+}
+
+// Visible weigh-ins, plus one either side so the lines run off the edges instead of stopping short.
+function wcPoints(s, e) {
+  const trend = trendSeries();
+  const pts = allWeights.map((w, i) => ({ i, t: wcT(w.date), w: w.weight, tr: trend[i].weight }));
+  let a = pts.findIndex(p => p.t >= s);
+  if (a === -1) a = pts.length;
+  let b = pts.length - 1;
+  while (b >= 0 && pts[b].t > e) b--;
+  return { vis: pts.slice(a, b + 1), drawn: pts.slice(Math.max(0, a - 1), Math.min(pts.length, b + 2)) };
+}
+
+// Ticks at whole days, Mondays or month starts, whichever gives at most six across the view.
+function wcTicks(s, e) {
+  const days = (e - s) / WC_DAY;
+  const steps = [[1, 'd'], [2, 'd'], [7, 'w'], [14, 'w'], [1, 'm'], [2, 'm'], [3, 'm'], [6, 'm'], [12, 'm']];
+  const [n, u] = steps.find(([n, u]) => days / (u === 'm' ? n * 30.4 : n) <= 6) || [12, 'm'];
+  const d = new Date(s);
+  d.setHours(12, 0, 0, 0);
+  if (u === 'w') while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+  if (u === 'm') {
+    if (d.getDate() !== 1 || d.getTime() < s) { d.setDate(1); d.setMonth(d.getMonth() + 1); }
+    while (d.getMonth() % n) d.setMonth(d.getMonth() + 1);
+  }
+  const out = [];
+  while (d.getTime() <= e) {
+    if (d.getTime() >= s) {
+      const label = u !== 'm' ? wcFmt(d, { day: 'numeric', month: 'short' })
+        : d.getMonth() === 0 || n === 12 ? String(d.getFullYear()) : wcFmt(d, { month: 'short' });
+      out.push({ t: d.getTime(), label });
+    }
+    if (u === 'm') d.setMonth(d.getMonth() + n); else d.setDate(d.getDate() + n);
+  }
+  return out;
+}
+
+function wcScale(key) {
+  const [s, e] = wcGetView();
+  const { vis, drawn } = wcPoints(s, e);
+  const ys = (vis.length ? vis : drawn).flatMap(p => [p.w, p.tr]);
+  let minV = Math.min(...ys), maxV = Math.max(...ys);
+  const pad = Math.max(0.3, (maxV - minV) * 0.12);
+  minV -= pad; maxV += pad;
+  if (maxV - minV < 1.5) { const m = (maxV + minV) / 2; minV = m - 0.75; maxV = m + 0.75; }
+  const toX = t => WC_PL + ((t - s) / (e - s)) * WC_CW;
+  const toY = v => WC_PT + ((maxV - v) / (maxV - minV)) * (WC_H - WC_PT - WC_PB);
+  return { s, e, vis, drawn, minV, maxV, toX, toY };
+}
+
+function wcMainSvg(key) {
+  const { s, e, vis, drawn, minV, maxV, toX, toY } = wcScale(key);
+  const bottom = WC_H - WC_PB;
+  const step = [0.25, 0.5, 1, 2, 5, 10].find(st => (maxV - minV) / st <= 6) || 10;
+  let grid = '';
+  for (let v = Math.ceil(minV / step) * step; v <= maxV; v += step) {
+    grid += `<line x1="${WC_PL}" x2="${WC_W - WC_PR}" y1="${toY(v)}" y2="${toY(v)}" stroke="#2c2c2e" stroke-width="1"/>
+      <text x="${WC_PL - 4}" y="${toY(v) + 3}" text-anchor="end" fill="#8e8e93" font-size="9">${+v.toFixed(2)}</text>`;
+  }
+  const xLabels = wcTicks(s, e).map(({ t, label }) => {
+    const x = toX(t);
+    const anchor = x < WC_PL + 14 ? 'start' : x > WC_W - WC_PR - 14 ? 'end' : 'middle';
+    return `<line x1="${x}" x2="${x}" y1="${WC_PT}" y2="${bottom}" stroke="#232325" stroke-width="1"/>
+      <text x="${x}" y="${WC_H - 8}" text-anchor="${anchor}" fill="#8e8e93" font-size="9">${label}</text>`;
   }).join('');
 
-  const yLabels = [Math.round(minV + 1), WEIGHT_GOAL].map(v =>
-    `<text x="${PL - 4}" y="${toY(v) + 4}" text-anchor="end" fill="#8e8e93" font-size="9">${v}</text>`
-  ).join('');
+  const goal = WEIGHT_GOAL >= minV && WEIGHT_GOAL <= maxV
+    ? `<line x1="${WC_PL}" x2="${WC_W - WC_PR}" y1="${toY(WEIGHT_GOAL)}" y2="${toY(WEIGHT_GOAL)}" stroke="#30d158" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>`
+    : '';
+  const goalNote = goal ? '' : `<text x="${WC_W - WC_PR}" y="${WC_PT - 6}" text-anchor="end" fill="#30d158" font-size="9">Goal ${WEIGHT_GOAL} kg ${WEIGHT_GOAL > maxV ? '↑' : '↓'}</text>`;
 
-  const dots = data.map((d, i) =>
-    `<circle cx="${toX(i)}" cy="${toY(d.weight)}" r="3" fill="var(--accent)"/>`
-  ).join('');
+  const r = (e - s) / WC_DAY <= 45 ? 3.5 : 2.5;
+  const raw   = drawn.map(p => `${toX(p.t)},${toY(p.w)}`).join(' ');
+  const trend = drawn.map(p => `${toX(p.t)},${toY(p.tr)}`).join(' ');
+  const dots  = vis.map(p => `<circle cx="${toX(p.t)}" cy="${toY(p.w)}" r="${r}" fill="var(--accent)"/>`).join('');
+
+  let sel = '';
+  const tip = wcState[key].tip;
+  const p = tip != null && vis.find(q => q.i === tip);
+  if (p) {
+    const x = toX(p.t);
+    sel = `<line x1="${x}" x2="${x}" y1="${WC_PT}" y2="${bottom}" stroke="#fff" stroke-width="1" opacity="0.35"/>
+      <circle cx="${x}" cy="${toY(p.tr)}" r="3" fill="#fff"/>
+      <circle cx="${x}" cy="${toY(p.w)}" r="6" fill="#1c1c1e" stroke="var(--accent)" stroke-width="2.5"/>`;
+  }
 
   return `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">
-      <line x1="${PL}" y1="${goalY}" x2="${W - PR}" y2="${goalY}"
-        stroke="#30d158" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
-      <text x="${W - PR + 2}" y="${goalY + 4}" fill="#30d158" font-size="9">Goal</text>
-      <polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linejoin="round" opacity="0.45"/>
+    <defs><clipPath id="wc-clip-${key}"><rect x="${WC_PL}" y="${WC_PT - 6}" width="${WC_CW}" height="${bottom - WC_PT + 12}"/></clipPath></defs>
+    <rect x="0" y="0" width="${WC_W}" height="${WC_H}" fill="transparent"/>
+    ${grid}${xLabels}${goalNote}
+    <g clip-path="url(#wc-clip-${key})">
+      ${goal}
+      ${drawn.length > 1 ? `<polyline points="${raw}" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linejoin="round" opacity="0.45"/>` : ''}
+      ${drawn.length > 2 ? `<polyline points="${trend}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>` : ''}
       ${dots}
-      ${data.length > 2 ? `<polyline points="${trendPts}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>` : ''}
-      ${xLabels}
-      ${yLabels}
-    </svg>
-    ${data.length > 2 ? `<div class="chart-legend"><span><i style="background:var(--accent)"></i>weigh-ins</span><span><i style="background:#fff"></i>7-day trend</span></div>` : ''}`;
+      ${sel}
+    </g>
+    ${vis.length ? '' : `<text x="${WC_PL + WC_CW / 2}" y="${WC_PT + 30}" text-anchor="middle" fill="#8e8e93" font-size="10">No weigh-ins in this window</text>`}`;
 }
+
+function wcNavSvg() {
+  const [lo, hi] = wcBounds();
+  const [s, e] = wcGetView();
+  const vals = allWeights.map(w => w.weight);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const toX = t => WC_PL + ((t - lo) / (hi - lo)) * WC_CW;
+  const toY = v => 5 + ((maxV - v) / (maxV - minV || 1)) * (WC_NAV_H - 10);
+  const line = allWeights.map(w => `${toX(wcT(w.date))},${toY(w.weight)}`).join(' ');
+  const xs = toX(s), xe = toX(e), mid = WC_NAV_H / 2;
+  return `
+    <rect x="${WC_PL}" y="0" width="${WC_CW}" height="${WC_NAV_H}" rx="6" fill="#2c2c2e"/>
+    <polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="1.2" stroke-linejoin="round" opacity="0.8"/>
+    <rect x="${WC_PL}" y="0" width="${Math.max(0, xs - WC_PL)}" height="${WC_NAV_H}" fill="#000" opacity="0.5"/>
+    <rect x="${xe}" y="0" width="${Math.max(0, WC_W - WC_PR - xe)}" height="${WC_NAV_H}" fill="#000" opacity="0.5"/>
+    <rect x="${xs}" y="0.75" width="${Math.max(1, xe - xs)}" height="${WC_NAV_H - 1.5}" rx="4" fill="none" stroke="#fff" stroke-opacity="0.6" stroke-width="1.5"/>
+    <rect x="${xs - 2.5}" y="${mid - 7}" width="5" height="14" rx="2.5" fill="#fff"/>
+    <rect x="${xe - 2.5}" y="${mid - 7}" width="5" height="14" rx="2.5" fill="#fff"/>`;
+}
+
+function wcReadout(key) {
+  const [s, e] = wcGetView();
+  const { vis } = wcPoints(s, e);
+  const tip = wcState[key].tip;
+  const p = tip != null && vis.find(q => q.i === tip);
+  if (p) {
+    const w = allWeights[p.i], prev = allWeights[p.i - 1];
+    const when = wcFmt(p.t, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+      + (w.ts ? ', ' + new Date(w.ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '');
+    const diff = prev ? +(w.weight - prev.weight).toFixed(1) : null;
+    const since = prev ? `${diff > 0 ? '+' : ''}${diff} kg since ${wcFmt(wcT(prev.date), { day: 'numeric', month: 'short' })}` : 'first weigh-in';
+    return `<div class="wc-read-main">${fmtKg(w.weight)} kg<span class="wc-read-sub">trend ${fmtKg(p.tr)} kg</span></div>
+      <div class="wc-read-date">${when} · ${since}</div>`;
+  }
+  const ds = Math.max(s, wcT(allWeights[0].date)), de = Math.min(e, wcT(todayStr));
+  const sameYear = new Date(ds).getFullYear() === new Date(de).getFullYear();
+  const dates = `${wcFmt(ds, sameYear ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' })} – ${wcFmt(de, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  if (vis.length < 2) {
+    return `<div class="wc-read-main">${vis.length ? fmtKg(vis[0].w) + ' kg' : '–'}</div>
+      <div class="wc-read-date">${dates} · ${vis.length} weigh-in${vis.length === 1 ? '' : 's'}</div>`;
+  }
+  const ch = +(vis[vis.length - 1].tr - vis[0].tr).toFixed(1);
+  return `<div class="wc-read-main" style="color:${ch > 0 ? 'var(--green)' : ch < 0 ? '#ff6961' : 'var(--text)'}">${ch > 0 ? '+' : ''}${ch} kg<span class="wc-read-sub">trend change in view</span></div>
+    <div class="wc-read-date">${dates} · ${vis.length} weigh-ins</div>`;
+}
+
+function wcDraw(key) {
+  const svg = document.getElementById(`wc-${key}-svg`);
+  if (!svg || allWeights.length < 2) { delete wcState[key]; return; }
+  svg.innerHTML = wcMainSvg(key);
+  document.getElementById(`wc-${key}-nav`).innerHTML = wcNavSvg();
+  document.getElementById(`wc-${key}-read`).innerHTML = wcReadout(key);
+  document.querySelectorAll(`#wc-${key}-ranges .wc-range`).forEach(b =>
+    b.classList.toggle('active', b.dataset.r === wcView.range));
+}
+
+const wcSvgX = (ev, el) => {
+  const box = el.getBoundingClientRect();
+  return ((ev.clientX - box.left) / box.width) * WC_W;
+};
+
+function wcPick(key, x) {
+  const { vis, toX } = wcScale(key);
+  if (!vis.length) return;
+  const near = vis.reduce((a, b) => Math.abs(toX(b.t) - x) < Math.abs(toX(a.t) - x) ? b : a);
+  if (wcState[key].tip !== near.i) { wcState[key].tip = near.i; wcRedrawAll(); }
+}
+
+function wcClearTip(key) {
+  if (wcState[key] && wcState[key].tip != null) { wcState[key].tip = null; wcRedrawAll(); }
+}
+
+function wcDown(ev, key) {
+  const st = wcState[key], svg = ev.currentTarget;
+  try { svg.setPointerCapture(ev.pointerId); } catch (_) {}
+  st.ptrs.set(ev.pointerId, { x: wcSvgX(ev, svg), cx: ev.clientX, cy: ev.clientY });
+  if (st.ptrs.size === 2) {
+    const [a, b] = [...st.ptrs.values()];
+    const [s, e] = wcGetView();
+    const mid = (a.x + b.x) / 2;
+    st.pinch = { d0: Math.max(20, Math.hypot(a.cx - b.cx, a.cy - b.cy)), s, e, tMid: s + ((mid - WC_PL) / WC_CW) * (e - s) };
+    st.drag = null;
+    wcClearTip(key);
+  } else if (st.ptrs.size === 1) {
+    if (ev.pointerType === 'mouse') {
+      const [s, e] = wcGetView();
+      st.drag = { x0: wcSvgX(ev, svg), s, e, moved: false };
+    }
+    wcPick(key, wcSvgX(ev, svg));
+  }
+}
+
+function wcMove(ev, key) {
+  const st = wcState[key], svg = ev.currentTarget;
+  const x = wcSvgX(ev, svg);
+  if (st.ptrs.has(ev.pointerId)) st.ptrs.set(ev.pointerId, { x, cx: ev.clientX, cy: ev.clientY });
+  if (st.pinch && st.ptrs.size === 2) {
+    const [a, b] = [...st.ptrs.values()];
+    const d = Math.max(20, Math.hypot(a.cx - b.cx, a.cy - b.cy));
+    const span = (st.pinch.e - st.pinch.s) * (st.pinch.d0 / d);
+    const frac = ((a.x + b.x) / 2 - WC_PL) / WC_CW;
+    wcSetView(st.pinch.tMid - frac * span, st.pinch.tMid + (1 - frac) * span);
+  } else if (st.drag && (ev.buttons & 1)) {
+    if (Math.abs(x - st.drag.x0) > 3) st.drag.moved = true;
+    if (st.drag.moved) {
+      const dt = ((x - st.drag.x0) / WC_CW) * (st.drag.e - st.drag.s);
+      wcSetView(st.drag.s - dt, st.drag.e - dt);
+      wcClearTip(key);
+      svg.style.cursor = 'grabbing';
+    }
+  } else if (!st.pinch && (ev.pointerType === 'mouse' || st.ptrs.has(ev.pointerId))) {
+    wcPick(key, x);
+  }
+}
+
+function wcUp(ev, key) {
+  const st = wcState[key];
+  st.ptrs.delete(ev.pointerId);
+  // A touch that turned into a page scroll is cancelled; don't leave a stray reading behind.
+  if (ev.type === 'pointercancel' && ev.pointerType !== 'mouse' && !st.pinch) wcClearTip(key);
+  if (st.ptrs.size < 2) st.pinch = null;
+  st.drag = null;
+  ev.currentTarget.style.cursor = '';
+}
+
+function wcLeave(ev, key) {
+  if (ev.pointerType === 'mouse' && !wcState[key].drag) wcClearTip(key);
+}
+
+function wcWheel(ev, key) {
+  ev.preventDefault();
+  const [s, e] = wcGetView();
+  const frac = (wcSvgX(ev, ev.currentTarget) - WC_PL) / WC_CW;
+  const t = s + frac * (e - s);
+  const span = (e - s) * Math.exp(ev.deltaY * 0.0015);
+  wcSetView(t - frac * span, t + (1 - frac) * span);
+}
+
+// The strip: drag the window to pan, drag either edge to resize, tap outside to jump there.
+function wcNavDown(ev, key) {
+  const st = wcState[key], nav = ev.currentTarget;
+  try { nav.setPointerCapture(ev.pointerId); } catch (_) {}
+  const [lo, hi] = wcBounds();
+  let [s, e] = wcGetView();
+  const x = wcSvgX(ev, nav);
+  const toX = t => WC_PL + ((t - lo) / (hi - lo)) * WC_CW;
+  const xs = toX(s), xe = toX(e);
+  let mode = 'pan';
+  if (xe - xs > 24 && Math.abs(x - xs) <= 10) mode = 'l';
+  else if (xe - xs > 24 && Math.abs(x - xe) <= 10) mode = 'r';
+  else if (x < xs || x > xe) {
+    const t = lo + ((x - WC_PL) / WC_CW) * (hi - lo);
+    wcSetView(t - (e - s) / 2, t + (e - s) / 2);
+    [s, e] = wcGetView();
+  }
+  st.nav = { mode, x0: x, s, e };
+}
+
+function wcNavMove(ev, key) {
+  const n = wcState[key].nav;
+  if (!n) return;
+  const [lo, hi] = wcBounds();
+  const dt = ((wcSvgX(ev, ev.currentTarget) - n.x0) / WC_CW) * (hi - lo);
+  if (n.mode === 'pan') wcSetView(n.s + dt, n.e + dt);
+  else if (n.mode === 'l') wcSetView(Math.min(n.s + dt, n.e - 5 * WC_DAY), n.e, true);
+  else wcSetView(n.s, Math.max(n.e + dt, n.s + 5 * WC_DAY), true);
+}
+
+function wcNavUp(ev, key) { wcState[key].nav = null; }
 
 // ── Graphs tab ────────────────────────────────────────────────────────────────
 // One point per session: the best estimated 1-rep max (Epley) of any set, so 40x8 and 50x4
@@ -3823,12 +4136,12 @@ function renderGraphs() {
           <div class="graph-stat"><div class="graph-stat-val" style="color:var(--green)">+${gained}</div><div class="graph-stat-lbl">Gained (kg)</div></div>
           <div class="graph-stat"><div class="graph-stat-val">${toGo > 0 ? toGo : 0}</div><div class="graph-stat-lbl">To Goal (kg)</div></div>
         </div>
-        ${buildProgressChart(allWeights.map(w => ({ date: w.date, weight: w.weight })), { gradId: 'bwGrad', color: '#30d158', goalVal: WEIGHT_GOAL, overlay: trendSeries() })}
-        ${allWeights.length > 2 ? `<div class="chart-legend"><span><i style="background:#30d158"></i>weigh-ins</span><span><i style="background:#fff"></i>7-day trend</span></div>` : ''}
+        ${weightChartHtml('graphs')}
       </div>`;
   }
 
   container.innerHTML = exHtml + bwHtml;
+  wcDraw('graphs');
 }
 
 function buildProgressChart(data, { gradId = 'grad', color = '#ff3b30', goalVal = null, overlay = null } = {}) {

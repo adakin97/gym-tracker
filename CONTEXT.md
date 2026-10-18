@@ -1,6 +1,6 @@
 # Gym Tracker App — Context
 
-> **Last updated:** 2026-09-25
+> **Last updated:** 2026-10-18
 
 ---
 
@@ -15,6 +15,18 @@
 3. **Weigh-ins.** None since 7 Sep as of 25 Sep; the Gain-tab rate needs 4+ in 21 days.
 4. **Blood test** (thyroid + coeliac, from August): still no result recorded.
 5. Still never verified on the phone itself; everything was checked in desktop Chrome and the harness.
+
+**2026-10-18: interactive body-weight chart. SHIPPED.** Alex asked for a weight graph he can zoom and read
+dates off. One component (`weightChartHtml(key)` + `wcDraw(key)`, prefix `wc`) now serves both the Gain tab
+(`'gain'`) and the Graphs tab (`'graphs'`); the old `buildWeightChart` is gone (`buildProgressChart` still draws
+the exercise chart). Range buttons 1M/3M/6M/1Y/All (default 3M); pinch or scroll-wheel to zoom; a strip under
+the chart shows all data, drag the window to pan, drag its edges to resize, tap outside to jump; mouse drag
+pans on desktop. Tap or hover shows the weigh-in in the line above the chart: weight, 7-day trend, date and
+save time (from `ts`), change since the previous weigh-in. Untouched, that line shows the trend change across
+the visible window. The y axis fits the visible data; the goal line shows when in range, otherwise a "Goal 75
+kg ↑" note. Both tabs share one view (`wcView`). Harness now seeded with the 23 real weigh-ins (with save
+times) to 18 Oct. Checked in the harness at phone width: pinch, wheel, scrub, cancelled touch, ranges, strip
+pan/resize/jump, both tabs, no console errors. **Not yet tried on the phone itself.** SW `gym-v8`.
 
 **Test harness (kept):** `../Other/test-harness/` runs the real `index.html` with Firebase stubbed and seeded with
 all real logs up to 25 Sep (`fixture.txt`). `python build.py`, then serve the folder and open `index.html` or
@@ -403,7 +415,7 @@ Functions: `loadRecipes()`, `addRecipeUI()`, `deleteRecipe()`, `logRecipe()`, `r
 
 ### Graphs Tab
 - **Exercise progress chart** — dropdown of all logged exercises; SVG line chart with gradient fill; shows peak / latest / progress (kg) / sessions stats
-- **Body weight chart** — SVG line chart; shows start / current / gained / to goal stats; dashed green goal line at 70 kg
+- **Body weight chart** — start / current / gained / to goal stats above the shared interactive chart (`weightChartHtml('graphs')`, see 2026-10-18)
 
 ---
 
@@ -500,6 +512,7 @@ const SESSIONS_PER_WEEK = 4, BREAK_DAYS = 10, PROGRAMME_START = '2026-09-21', CU
 | Date | Changes |
 |------|---------|
 | 2026-09-25 | Posture block cut to three (Foam Roller Extension, Doorway Slide, High-to-Low Band Pull-Apart), one per stage, all required. SW `gym-v7`. |
+| 2026-10-18 | **Interactive body-weight chart** on the Gain and Graphs tabs: range buttons, pinch/scroll zoom, pan-and-resize strip, tap or hover for date, time, weight, trend and change. SW `gym-v8`. |
 | 2026-09-25 | **4 shorter full-body sessions (A-D, Mon/Tue/Thu/Sat), 4 exercises each, same weekly volume.** Programmes date-versioned (`PROGRAMMES`, `findWorkout(name, dateStr)`) since 3-day and 4-day share names; today opens as the logged session once anything is logged. Fixed a contradictory "fell to X reps, use the same weight" suggestion. SW `gym-v6`. |
 | 2026-09-24 | **Programme and progression rebuilt from a 6-month log review.** 3-day full body (A/B/C, Mon/Wed/Fri) replaces Upper/Lower, old split kept as `LEGACY_WORKOUTS` for past dates; stale old-split week plans ignored. Double progression (`suggestLoad`) replaces the +2.5 kg nudge; live too-heavy/too-light set feedback; return-from-break loads; reps required to log. Today tab: weigh-in prompt, This-week card (x/3, streak, days since last session, fractional sets per muscle vs plan and 4-week avg), catch-up "Train now" button on behind rest days. Graphs: e1RM, lift trends, date-based x, trend line. Gain: 0.2-0.35 kg/wk band, goal 75 kg. Tempo removed. Fixes: `extraSets` leak, added rows lost on re-render, `nth-child` addSet lookup. SW `gym-v5`. Verified in a stubbed harness seeded with all 595 real sets; not on phone. |
 | 2026-08-18 | **Nutrition paused behind `NUTRITION_ENABLED = false`** (Alex moved to MyFitnessPal): fuel strip, Gain-tab food cards, Recipes tab, rest-day and complete-banner calorie stats, and History food/note cards all gated off rather than deleted; recipe seeding skipped so nothing writes to Firestore while paused; no Firestore data removed. **Added the morning posture block, built to the AthleanX rounded-shoulders protocol Alex supplied**: three ordered stages (mobilise the thoracic spine, stretch pec minor/subscapularis, strengthen mid-back and lower traps), six items of which the foam-roller drill is optional and excluded from the 5/5 target so a missing roller cannot kill the streak, plus the tennis-ball desk habit as a footer note. Kept out of `WORKOUTS` so it never enters training volume. Tick-off, collapse-when-done, streak that tolerates an unfinished today. An earlier four-exercise version from the same session was superseded by the protocol. New collection `users/{uid}/posture/{date}`. Each row carries a 54px thumbnail from free-exercise-db where an honest match exists (`Rhomboids-SMR`, `Face_Pull`, `Band_Pull_Apart`, 3 of 6); the prone roll-back, doorway slide and pitcher's stretch have no match in the database and render a dashed placeholder, which is also the `onerror` fallback. Service worker bumped `gym-v3` → `gym-v4`. Logic unit-tested; card states screenshotted in-browser including the loaded thumbnails. **Shipped: committed `097d645`, pushed to `main`, Pages build confirmed `built` and the deployed files fetched back to verify.** |
