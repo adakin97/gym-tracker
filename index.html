@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=9');
+    navigator.serviceWorker.register('sw.js?v=10');
   }
 </script>
 <style>
@@ -1171,7 +1171,7 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 
 // ── Workout data ──────────────────────────────────────────────────────────────
-// ── Programme (from 2026-09-26): 4-day full body, shorter sessions ─────────────────
+// ── Programme (from 2026-09-26, adapted 2026-11-02): 4-day full body, shorter sessions ─────────────────
 // History: Upper/Lower (Mar-Sep 2026) stalled because the lower days were the ones skipped
 // (13 leg sets in five months; see Gym 2026 Claude/Training-Review-2026-09-24.md). It became a
 // 3-day full body on 24 Sep; after one session Alex asked for shorter sessions on 4 days instead.
@@ -1183,8 +1183,12 @@ const db   = firebase.firestore();
 //   - Compounds first with longer rest (Schoenfeld 2016, 3 min beat 1 min).
 //   - Accessories lean towards the stretched position (Maeo 2023 overhead triceps, seated
 //     leg curl, incline curl), plus lateral raises for shoulder width.
-//   - D is the short day: leg isolation plus delts and triceps.
 //   - Progression is double progression, driven by the rep range: see suggestLoad().
+// 2026-11-02: adapted to what Alex actually did in the first five weeks (12 sessions logged).
+// B unchanged; A takes assisted pull-ups for the pulldown; C drops the split squats (skipped every
+// time) for leg extensions and takes the pulldown; D becomes leg curl, barbell bench, rows and
+// pushdowns, as logged on 24 and 30 Oct, keeping the leg curl as the week's second hamstring lift.
+// Weekly fractional sets: quads 6, hamstrings 6, chest 9, back 12, shoulders 6, biceps 8, triceps 10.
 // Keys are the default day of week (Mon/Tue/Thu/Sat); any day can still be replanned.
 const WORKOUTS = {
   1: {
@@ -1192,7 +1196,7 @@ const WORKOUTS = {
     exercises: [
       { name: 'Leg Press',                        muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '180 sec', imgId: 'Leg_Press/0.jpg' },
       { name: 'Incline Dumbbell Press',           muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Incline_Dumbbell_Press/0.jpg' },
-      { name: 'Lat Pulldown',                     muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+      { name: 'Pull-ups',                         muscle: 'Back',       sets: 3, reps: '6-10',  rest: '150 sec', imgId: 'Pullups/0.jpg' },
       { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
     ]
   },
@@ -1208,25 +1212,53 @@ const WORKOUTS = {
   4: {
     name: 'Full Body C', short: 'Full C', focus: 'Full body',
     exercises: [
-      { name: 'Bulgarian Split Squats',           muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+      { name: 'Leg Extensions',                   muscle: 'Quads',      sets: 3, reps: '12-15', rest: '90 sec',  imgId: 'Leg_Extensions/0.jpg' },
       { name: 'Dumbbell Bench Press',             muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Bench_Press/0.jpg' },
-      { name: 'Pull-ups',                         muscle: 'Back',       sets: 3, reps: '6-10',  rest: '150 sec', imgId: 'Pullups/0.jpg' },
+      { name: 'Lat Pulldown',                     muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
       { name: 'Overhead Cable Triceps Extension', muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Cable_Rope_Overhead_Triceps_Extension/0.jpg' },
     ]
   },
   6: {
-    name: 'Full Body D', short: 'Full D', focus: 'Legs, shoulders, arms',
+    name: 'Full Body D', short: 'Full D', focus: 'Full body',
     exercises: [
       { name: 'Seated Leg Curl',                  muscle: 'Hamstrings', sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Seated_Leg_Curl/0.jpg' },
-      { name: 'Leg Extensions',                   muscle: 'Quads',      sets: 2, reps: '12-15', rest: '90 sec',  imgId: 'Leg_Extensions/0.jpg' },
-      { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+      { name: 'Barbell Bench Press',              muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Barbell_Bench_Press_-_Medium_Grip/0.jpg' },
+      { name: 'Seated Cable Rows',                muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Seated_Cable_Rows/0.jpg' },
       { name: 'Cable Tricep Pushdowns',           muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
     ]
   }
 };
 const SESSIONS_PER_WEEK = 4;
 const PROGRAMME_START   = '2026-09-21';   // Monday of the week full body replaced Upper/Lower
-const CURRENT_FROM      = '2026-09-26';   // first day the 4-day version applies
+const CURRENT_FROM      = '2026-11-02';   // first day the adapted 4-day version applies
+
+// The first 4-day version, 26 Sep to 1 Nov 2026. Same session names as the current one.
+const FULL_BODY_4_V1 = [
+  { name: 'Full Body A', short: 'Full A', focus: 'Full body', exercises: [
+    { name: 'Leg Press',                        muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '180 sec', imgId: 'Leg_Press/0.jpg' },
+    { name: 'Incline Dumbbell Press',           muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Incline_Dumbbell_Press/0.jpg' },
+    { name: 'Lat Pulldown',                     muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Close-Grip_Front_Lat_Pulldown/0.jpg' },
+    { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+  ]},
+  { name: 'Full Body B', short: 'Full B', focus: 'Full body', exercises: [
+    { name: 'Machine Deadlift',                 muscle: 'Hamstrings', sets: 3, reps: '8-10',  rest: '180 sec', imgId: 'Leverage_Deadlift/0.jpg' },
+    { name: 'Dumbbell Shoulder Press',          muscle: 'Shoulders',  sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Shoulder_Press/0.jpg' },
+    { name: 'Seated Cable Rows',                muscle: 'Back',       sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Seated_Cable_Rows/0.jpg' },
+    { name: 'Incline Dumbbell Curl',            muscle: 'Biceps',     sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Incline_Dumbbell_Curl/0.jpg' },
+  ]},
+  { name: 'Full Body C', short: 'Full C', focus: 'Full body', exercises: [
+    { name: 'Bulgarian Split Squats',           muscle: 'Quads',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Split_Squat_with_Dumbbells/0.jpg' },
+    { name: 'Dumbbell Bench Press',             muscle: 'Chest',      sets: 3, reps: '8-12',  rest: '150 sec', imgId: 'Dumbbell_Bench_Press/0.jpg' },
+    { name: 'Pull-ups',                         muscle: 'Back',       sets: 3, reps: '6-10',  rest: '150 sec', imgId: 'Pullups/0.jpg' },
+    { name: 'Overhead Cable Triceps Extension', muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Cable_Rope_Overhead_Triceps_Extension/0.jpg' },
+  ]},
+  { name: 'Full Body D', short: 'Full D', focus: 'Legs, shoulders, arms', exercises: [
+    { name: 'Seated Leg Curl',                  muscle: 'Hamstrings', sets: 3, reps: '10-15', rest: '90 sec',  imgId: 'Seated_Leg_Curl/0.jpg' },
+    { name: 'Leg Extensions',                   muscle: 'Quads',      sets: 2, reps: '12-15', rest: '90 sec',  imgId: 'Leg_Extensions/0.jpg' },
+    { name: 'Side Lateral Raise',               muscle: 'Shoulders',  sets: 3, reps: '12-20', rest: '90 sec',  imgId: 'Side_Lateral_Raise/0.jpg' },
+    { name: 'Cable Tricep Pushdowns',           muscle: 'Triceps',    sets: 2, reps: '10-15', rest: '90 sec',  imgId: 'Reverse_Grip_Triceps_Pushdown/0.jpg' },
+  ]},
+];
 
 // Earlier programmes, kept so a past date opens as the session that was actually done (and
 // its lifts stay in the swap list). Never offered in the picker or the week planner.
@@ -1289,6 +1321,7 @@ const FULL_BODY_3 = [
 const PROGRAMMES = [
   { from: '0000-00-00',    workouts: UPPER_LOWER },
   { from: '2026-09-24',    workouts: FULL_BODY_3 },
+  { from: '2026-09-26',    workouts: FULL_BODY_4_V1 },
   { from: CURRENT_FROM,    workouts: Object.values(WORKOUTS) },
 ];
 
