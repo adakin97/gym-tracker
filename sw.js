@@ -1,4 +1,4 @@
-const CACHE = 'gym-v8';
+const CACHE = 'gym-v9';
 
 self.addEventListener('install', () => self.skipWaiting());
 

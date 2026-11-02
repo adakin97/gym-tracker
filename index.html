@@ -11,7 +11,7 @@
 <title>Alex's Gym Tracker</title>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=8');
+    navigator.serviceWorker.register('sw.js?v=9');
   }
 </script>
 <style>
@@ -39,6 +39,7 @@
   padding: 14px; margin-bottom: 14px;
 }
 .posture-card.done { padding: 10px 14px; border-color: rgba(48,209,88,0.4); }
+.posture-card.min { padding: 10px 14px; opacity: 0.6; }
 .posture-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .posture-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
 .posture-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
@@ -1923,6 +1924,18 @@ function renderPosture() {
     return;
   }
 
+  // Minimised: one quiet line until tapped open.
+  if (POSTURE_MINIMISED && !postureOpen) {
+    el.innerHTML = `
+      <div class="posture-card min" onclick="togglePostureOpen()">
+        <div class="posture-head">
+          <div class="posture-title">\u{1F9CD} Morning posture</div>
+          <span class="posture-count">${count}/${POSTURE_REQUIRED} \u25be</span>
+        </div>
+      </div>`;
+    return;
+  }
+
   const stages = POSTURE_STAGES.map((st, si) => {
     const rows = st.items.map(ex => {
       const ticked = done.has(ex.name);
@@ -3300,6 +3313,10 @@ const POSTURE_REQUIRED = POSTURE.filter(ex => !ex.optional).length;
 
 // All-day habit, not a morning rep, so it renders as a footer note rather than a tickable row.
 const POSTURE_HABIT = 'Desk habit: sit with a tennis or lacrosse ball between your shoulder blades. If the shoulders start to round, it drops down your back.';
+
+// Minimised for now (2026-11-02, Alex): the card starts collapsed to one line and opens on tap.
+// Ticks and the streak still work. Set to false to show it in full every morning again.
+const POSTURE_MINIMISED = true;
 
 const NUTRITION_ENABLED = false;
 const KCAL_TARGET    = 3350;
